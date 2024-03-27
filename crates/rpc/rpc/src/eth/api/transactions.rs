@@ -452,7 +452,7 @@ where
         if let Some(tx) =
             self.pool().get_pooled_transaction_element(hash).map(|tx| tx.envelope_encoded())
         {
-            return Ok(Some(tx));
+            return Ok(Some(tx))
         }
 
         self.on_blocking_task(|this| async move {

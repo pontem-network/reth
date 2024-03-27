@@ -73,7 +73,7 @@ fn test_move_transaction() {
         gas_price: 2200000000,
         gas_limit: 34811,
         to: TransactionKind::Create,
-        value: 1234u64.into(),
+        value: U256::from(1234u64),
         input: Bytes::from(encoded_tx),
     });
     let signature = Signature {
