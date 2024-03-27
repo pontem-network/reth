@@ -267,15 +267,14 @@ impl MoveExecutor {
     where
         R: MoveResolverExt,
     {
-        Ok(self
+        self
             .vm
             .as_ref()
             .expect("VM not initialized")
             .load_module(id, resolver)
             .map_err(|e| BlockExecutionError::CanonicalRevert {
                 inner: format!("[CrossVM]: failed to load module {}", e),
-            })?
-            .clone())
+            })
     }
 
     /// Execute move transaction on CrossVM eth contract call.
@@ -570,8 +569,8 @@ impl MoveExecutor {
     {
         let value = Self::map_write_op(op)?;
         let addr = map_access_path_to_address(&module_path);
-        if !state.contains_key(&addr) {
-            state.insert(addr, self.load_or_create_account(addr, db)?);
+        if let std::collections::hash_map::Entry::Vacant(e) = state.entry(addr) {
+            e.insert(self.load_or_create_account(addr, db)?);
         }
         let acc = state.get_mut(&addr).unwrap();
         acc.mark_touch();
@@ -616,8 +615,8 @@ impl MoveExecutor {
         DB::Error: Display,
     {
         let acc_address = map_storage_key_to_eth(key)?.0;
-        if !state.contains_key(&acc_address) {
-            state.insert(acc_address, self.load_or_create_account(acc_address, db)?);
+        if let std::collections::hash_map::Entry::Vacant(e) = state.entry(acc_address) {
+            e.insert(self.load_or_create_account(acc_address, db)?);
         }
         let mut io = ResourceIO::new(key, db, &self.preloader)?;
         let acc = state.get_mut(&acc_address).expect("unreachable");

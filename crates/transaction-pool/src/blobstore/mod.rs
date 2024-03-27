@@ -89,8 +89,8 @@ pub enum BlobStoreError {
 impl Clone for BlobStoreError {
     fn clone(&self) -> Self {
         match self {
-            Self::MissingSidecar(arg0) => Self::MissingSidecar(arg0.clone()),
-            Self::DecodeError(arg0) => Self::DecodeError(arg0.clone()),
+            Self::MissingSidecar(arg0) => Self::MissingSidecar(*arg0),
+            Self::DecodeError(arg0) => Self::DecodeError(*arg0),
             Self::Other(arg0) => Self::Other(Box::new(OtherError::new(arg0))),
         }
     }

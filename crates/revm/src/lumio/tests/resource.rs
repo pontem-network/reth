@@ -261,7 +261,7 @@ fn store(provider: &MockEthProvider, acc: &str, path: &str, data: &str) {
     let mut io = ResourceIO::new(&key, &mut substate, &preloader).unwrap();
     let addr = io.address();
     let mut diff = HashMap::new();
-    let value = ValueWithMeta { value: data.clone(), metadata: None };
+    let value = ValueWithMeta { value: data, metadata: None };
     io.modify_value(&value, &mut diff).unwrap();
     apply_storage(&diff, provider, addr);
     let mut io = ResourceIO::new(&key, &mut substate, &preloader).unwrap();

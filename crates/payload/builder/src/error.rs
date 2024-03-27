@@ -41,7 +41,7 @@ pub enum PayloadBuilderError {
 impl Clone for PayloadBuilderError {
     fn clone(&self) -> Self {
         match self {
-            Self::MissingParentBlock(arg0) => Self::MissingParentBlock(arg0.clone()),
+            Self::MissingParentBlock(arg0) => Self::MissingParentBlock(*arg0),
             Self::ChannelClosed => Self::ChannelClosed,
             Self::BlobStore(arg0) => Self::BlobStore(arg0.clone()),
             Self::Internal(arg0) => Self::Internal(arg0.clone()),

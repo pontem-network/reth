@@ -223,7 +223,7 @@ fn map_type_tag(tkn: &TypeTag) -> Result<ParamType, BlockExecutionError> {
             })
         }
         TypeTag::Vector(tp) => {
-            if let TypeTag::U8 = tp.as_ref() {
+            if matches!(tp.as_ref(), TypeTag::U8) {
                 ParamType::Bytes
             } else {
                 ParamType::Array(Box::new(map_type_tag(tp)?))

@@ -51,7 +51,7 @@ impl<DB: Database> Database for TransitionState<DB> {
         if let Some(addr) = self.accounts.get(&address) {
             Ok(Some(addr.clone().info))
         } else {
-            Ok(self.original_db.basic(address)?.clone())
+            Ok(self.original_db.basic(address)?)
         }
     }
 
