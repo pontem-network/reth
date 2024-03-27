@@ -102,11 +102,11 @@ impl TransactionPool for NoopTransactionPool {
         mpsc::channel(1).1
     }
 
-    fn blob_transaction_sidecars_listener(&self) -> Receiver<NewBlobSidecar> {
+    fn new_transactions_listener(&self) -> Receiver<NewTransactionEvent<Self::Transaction>> {
         mpsc::channel(1).1
     }
 
-    fn new_transactions_listener(&self) -> Receiver<NewTransactionEvent<Self::Transaction>> {
+    fn blob_transaction_sidecars_listener(&self) -> Receiver<NewBlobSidecar> {
         mpsc::channel(1).1
     }
 
@@ -221,6 +221,13 @@ impl TransactionPool for NoopTransactionPool {
         None
     }
 
+    fn get_transactions_by_origin(
+        &self,
+        _origin: TransactionOrigin,
+    ) -> Vec<Arc<ValidPoolTransaction<Self::Transaction>>> {
+        vec![]
+    }
+
     fn unique_senders(&self) -> HashSet<Address> {
         Default::default()
     }
@@ -244,13 +251,6 @@ impl TransactionPool for NoopTransactionPool {
             return Ok(vec![])
         }
         Err(BlobStoreError::MissingSidecar(tx_hashes[0]))
-    }
-
-    fn get_transactions_by_origin(
-        &self,
-        _origin: TransactionOrigin,
-    ) -> Vec<Arc<ValidPoolTransaction<Self::Transaction>>> {
-        vec![]
     }
 }
 
