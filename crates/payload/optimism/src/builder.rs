@@ -459,9 +459,9 @@ where
                 .then_some(1),
         }));
 
-            /* ------LUMIO-START------- */
-            db.finalize();
-            /* ------LUMIO-END------- */
+        /* ------LUMIO-START------- */
+        db.finalize();
+        /* ------LUMIO-END------- */
 
         // append transaction to the list of executed transactions
         executed_txs.push(sequencer_tx.into_signed());

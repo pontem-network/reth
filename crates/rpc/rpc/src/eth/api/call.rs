@@ -365,8 +365,7 @@ where
                 &mut highest_gas_limit,
                 &mut lowest_gas_limit,
                 /* ------LUMIO-START------- */
-                gas_used_by_cross_calls
-                /* ------LUMIO-END------- */
+                gas_used_by_cross_calls, /* ------LUMIO-END------- */
             )?;
         };
 
@@ -418,8 +417,7 @@ where
                 &mut highest_gas_limit,
                 &mut lowest_gas_limit,
                 /* ------LUMIO-START------- */
-                gas_used_by_cross_calls
-                /* ------LUMIO-END------- */
+                gas_used_by_cross_calls, /* ------LUMIO-END------- */
             )?;
 
             // new midpoint
