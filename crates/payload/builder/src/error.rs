@@ -48,6 +48,7 @@ impl Clone for PayloadBuilderError {
             Self::EvmExecutionError(arg0) => Self::EvmExecutionError(arg0.clone()),
             Self::WithdrawalsBeforeShanghai => Self::WithdrawalsBeforeShanghai,
             Self::Other(arg0) => Self::Other(Box::new(OtherError::new(arg0))),
+            #[cfg(feature = "optimism")]
             Self::Magic(arg0) => Self::Magic(arg0.clone()),
         }
     }

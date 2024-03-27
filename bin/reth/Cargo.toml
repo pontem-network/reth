@@ -15,18 +15,28 @@ workspace = true
 [dependencies]
 # reth
 reth-auto-seal-consensus.workspace = true
+reth-consensus-common.workspace = true
+reth-blockchain-tree.workspace = true
+reth-rpc-engine-api.workspace = true
+reth-rpc-builder.workspace = true
+reth-rpc.workspace = true
+reth-rpc-types.workspace = true
+reth-rpc-types-compat.workspace = true
+reth-rpc-api = { workspace = true, features = ["client"] }
+reth-network = { workspace = true, features = ["serde"] }
+reth-network-api.workspace = true
+reth-downloaders.workspace = true
+reth-tracing.workspace = true
+reth-tasks.workspace = true
+reth-ethereum-payload-builder.workspace = true
+reth-payload-builder.workspace = true
+reth-payload-validator.workspace = true
 reth-basic-payload-builder.workspace = true
 reth-beacon-consensus.workspace = true
-reth-blockchain-tree.workspace = true
 reth-config.workspace = true
-reth-consensus-common.workspace = true
 reth-db = {workspace = true, features = ["mdbx"]}
 reth-discv4.workspace = true
-reth-downloaders.workspace = true
-reth-ethereum-payload-builder.workspace = true
 reth-interfaces = {workspace = true, features = ["clap"]}
-reth-network = {workspace = true, features = ["serde"]}
-reth-network-api.workspace = true
 reth-static-file = { workspace = true, features = ["clap"] }
 reth-trie = { workspace = true, features = ["metrics"] }
 reth-nippy-jar.workspace = true
@@ -38,21 +48,11 @@ reth-node-optimism = {workspace = true, optional = true, features = [
   "optimism",
 ]}
 reth-optimism-payload-builder = {workspace = true, optional = true}
-reth-payload-builder.workspace = true
-reth-payload-validator.workspace = true
 reth-primitives = {workspace = true, features = ["arbitrary", "clap"]}
 reth-provider = {workspace = true}
 reth-prune.workspace = true
 reth-revm.workspace = true
-reth-rpc-api = {workspace = true, features = ["client"]}
-reth-rpc-builder.workspace = true
-reth-rpc-engine-api.workspace = true
-reth-rpc-types-compat.workspace = true
-reth-rpc-types.workspace = true
-reth-rpc.workspace = true
 reth-stages.workspace = true
-reth-tasks.workspace = true
-reth-tracing.workspace = true
 reth-transaction-pool.workspace = true
 
 # crypto
@@ -140,8 +140,6 @@ optimism = [
     "reth-network/optimism",
     "reth-network-api/optimism",
     "reth-blockchain-tree/optimism",
-    "reth-payload-builder/optimism",
-    "reth-optimism-payload-builder/optimism",
     "dep:reth-node-optimism",
     "reth-node-core/optimism",
 ]
