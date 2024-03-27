@@ -2227,6 +2227,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "concat-kdf"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2d72c1252426a83be2092dd5884a5f6e3b8e7180f6891b6263d2c21b92ec8816"
+dependencies = [
+ "digest 0.10.7",
+]
+
+[[package]]
 name = "concurrent-queue"
 version = "2.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8047,6 +8056,7 @@ dependencies = [
  "block-padding 0.3.3",
  "byteorder",
  "cipher 0.4.4",
+ "concat-kdf",
  "ctr 0.9.2",
  "digest 0.10.7",
  "educe",
@@ -8152,7 +8162,6 @@ dependencies = [
  "rand 0.8.5",
  "reth-eth-wire",
  "reth-network-api",
- "reth-nippy-jar",
  "reth-primitives",
  "reth-rpc-types",
  "secp256k1 0.27.0",
@@ -8714,6 +8723,7 @@ dependencies = [
  "async-trait",
  "bytes",
  "derive_more",
+ "dyn-clone",
  "futures",
  "http",
  "http-body",
@@ -8721,6 +8731,7 @@ dependencies = [
  "jsonrpsee",
  "jsonwebtoken",
  "metrics",
+ "parking_lot 0.12.1",
  "pin-project",
  "rand 0.8.5",
  "reqwest",

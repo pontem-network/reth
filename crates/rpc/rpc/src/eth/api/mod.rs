@@ -43,6 +43,7 @@ use reth_provider::LumioProvider;
 mod block;
 mod call;
 pub(crate) mod fee_history;
+
 mod fees;
 #[cfg(feature = "optimism")]
 mod optimism;
@@ -148,7 +149,7 @@ where
             provider,
             pool,
             network,
-            signers: Default::default(),
+            signers: parking_lot::RwLock::new(Default::default()),
             eth_cache,
             gas_oracle,
             gas_cap,
@@ -414,7 +415,7 @@ where
     }
 
     fn accounts(&self) -> Vec<Address> {
-        self.inner.signers.iter().flat_map(|s| s.accounts()).collect()
+        self.inner.signers.read().iter().flat_map(|s| s.accounts()).collect()
     }
 
     fn is_syncing(&self) -> bool {
@@ -479,7 +480,7 @@ struct EthApiInner<Provider, Pool, Network, EvmConfig> {
     /// An interface to interact with the network
     network: Network,
     /// All configured Signers
-    signers: Vec<Box<dyn EthSigner>>,
+    signers: parking_lot::RwLock<Vec<Box<dyn EthSigner>>>,
     /// The async cache frontend for eth related data
     eth_cache: EthStateCache,
     /// The async gas oracle frontend for gas price suggestions
