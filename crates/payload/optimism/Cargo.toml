@@ -34,9 +34,8 @@ reth-interfaces.workspace = true
 # This is a workaround for reth-cli crate to allow this as mandatory dependency without breaking the build even if unused.
 # This makes managing features and testing workspace easier because clippy always builds all members if --workspace is provided
 optimism = [
-  "reth-primitives/optimism",
-  "reth-revm/optimism",
-  "reth-transaction-pool/optimism",
-  "reth-provider/optimism",
-  "reth-payload-builder/optimism",
+    "reth-primitives/optimism",
+    "reth-revm/optimism",
+    "reth-provider/optimism",
+    "reth-payload-builder/optimism",
 ]

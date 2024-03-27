@@ -136,7 +136,6 @@ optimism = [
     "reth-interfaces/optimism",
     "reth-rpc/optimism",
     "reth-rpc-engine-api/optimism",
-    "reth-transaction-pool/optimism",
     "reth-provider/optimism",
     "reth-beacon-consensus/optimism",
     "reth-auto-seal-consensus/optimism",
