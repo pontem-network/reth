@@ -963,7 +963,6 @@ mod tests {
             .original_db
             /* ------LUMIO-END------- */
             .transition_state
-            .clone()
             .expect("the evm should be initialized with bundle updates");
 
         // assert that it is the default (empty) transition state

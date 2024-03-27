@@ -490,7 +490,7 @@ mod tests {
             .execute(
                 &BlockWithSenders {
                     block: Block {
-                        header: header.clone(),
+                        header,
                         body: vec![tx, tx_deposit],
                         ommers: vec![],
                         withdrawals: None,
@@ -561,7 +561,7 @@ mod tests {
             .execute(
                 &BlockWithSenders {
                     block: Block {
-                        header: header.clone(),
+                        header,
                         body: vec![tx, tx_deposit],
                         ommers: vec![],
                         withdrawals: None,
