@@ -843,6 +843,7 @@ impl NodeConfig {
                     header_downloader,
                     body_downloader,
                     factory.clone(),
+                    stage_config.etl.clone(),
                 )
                 .set(SenderRecoveryStage {
                     commit_threshold: stage_config.sender_recovery.commit_threshold,
@@ -876,6 +877,7 @@ impl NodeConfig {
                 .set(MerkleStage::new_execution(stage_config.merkle.clean_threshold))
                 .set(TransactionLookupStage::new(
                     stage_config.transaction_lookup.chunk_size,
+                    stage_config.etl.clone(),
                     prune_modes.transaction_lookup,
                 ))
                 .set(IndexAccountHistoryStage::new(
