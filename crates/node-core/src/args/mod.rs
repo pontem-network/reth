@@ -55,4 +55,5 @@ pub mod utils;
 
 pub mod types;
 
+/// Arguments for Lumio
 pub mod lumio;

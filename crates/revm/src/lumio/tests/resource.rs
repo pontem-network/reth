@@ -271,7 +271,7 @@ fn store(provider: &MockEthProvider, acc: &str, path: &str, data: &str) {
 
 fn apply_storage(storage: &HashMap<U256, StorageSlot>, provider: &MockEthProvider, addr: Address) {
     let mut map = provider.accounts.lock();
-    let acc = map.entry(addr).or_insert(ExtendedAccount::new(0, U256::ZERO));
+    let acc = map.entry(addr).or_insert_with(|| ExtendedAccount::new(0, U256::ZERO));
 
     let diff = storage.iter().map(|(key, slot)| {
         let key = StorageKey::from(*key);

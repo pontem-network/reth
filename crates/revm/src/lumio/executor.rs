@@ -267,14 +267,11 @@ impl MoveExecutor {
     where
         R: MoveResolverExt,
     {
-        self
-            .vm
-            .as_ref()
-            .expect("VM not initialized")
-            .load_module(id, resolver)
-            .map_err(|e| BlockExecutionError::CanonicalRevert {
+        self.vm.as_ref().expect("VM not initialized").load_module(id, resolver).map_err(|e| {
+            BlockExecutionError::CanonicalRevert {
                 inner: format!("[CrossVM]: failed to load module {}", e),
-            })
+            }
+        })
     }
 
     /// Execute move transaction on CrossVM eth contract call.

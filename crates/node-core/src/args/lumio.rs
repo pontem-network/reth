@@ -1,6 +1,7 @@
 use clap::Args;
 use std::path::PathBuf;
 
+/// Arguments for Lumio
 #[derive(Debug, Args, PartialEq, Eq, Default, Clone)]
 #[clap(next_help_heading = "Lumio")]
 pub struct LumioArgs {

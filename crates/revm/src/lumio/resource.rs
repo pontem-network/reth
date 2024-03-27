@@ -200,12 +200,12 @@ impl<'a> Iterator for ValueSplitter<'a> {
             value[0..4].copy_from_slice(&value_len.to_le_bytes());
             value[4..4 + range.len()].copy_from_slice(&self.values[0..range.len()]);
             self.values = &self.values[range.len()..];
-            Some((key, U256::from_limbs(bytemuck::cast(value))))
         } else {
             value[0..range.len()].copy_from_slice(&self.values[0..range.len()]);
             self.values = &self.values[range.end..];
-            Some((key, U256::from_limbs(bytemuck::cast(value))))
         }
+
+        Some((key, U256::from_limbs(bytemuck::cast(value))))
     }
 }
 

@@ -101,8 +101,8 @@ pub struct OtherError(String);
 
 impl OtherError {
     /// New cloneable error.
-    pub fn new(err: &Box<dyn std::error::Error + Send + Sync>) -> Self {
-        Self(err.to_string())
+    pub fn new(err: impl AsRef<dyn std::error::Error + Send + Sync>) -> Self {
+        Self(err.as_ref().to_string())
     }
 }
 

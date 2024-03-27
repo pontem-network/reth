@@ -221,12 +221,8 @@ where
         let request_gas_price = request.gas_price;
         let env_gas_limit = block.gas_limit;
         /* ------LUMIO-START------- */
-        let request = TransactionRequest {
-            chain_id: request
-                .chain_id
-                .or_else(|| Some(cfg.chain_id.try_into().expect("u64 == Uint<64, 1>"))),
-            ..request
-        };
+        let request =
+            TransactionRequest { chain_id: request.chain_id.or(Some(cfg.chain_id)), ..request };
         /* ------LUMIO-END------- */
         // get the highest possible gas limit, either the request's set value or the currently
         // configured gas limit
