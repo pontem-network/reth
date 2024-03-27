@@ -30,7 +30,7 @@ fn test_eth_transaction() {
     let tx = MagicTx::try_from(&decoded).unwrap();
     assert!(!tx.is_move());
     assert_eq!(tx.gas_limit(), 133567);
-    assert_eq!(tx.tx_type(), TxType::EIP1559);
+    assert_eq!(tx.tx_type(), TxType::Eip1559);
     assert_eq!(
         tx.hash(),
         B256::from_slice(
