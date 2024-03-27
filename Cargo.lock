@@ -7809,6 +7809,7 @@ dependencies = [
  "reth-revm",
  "reth-stages",
  "reth-trie",
+ "reth-trie-parallel",
  "tokio",
  "tracing",
 ]
@@ -8308,6 +8309,7 @@ dependencies = [
  "eyre",
  "fdlimit",
  "futures",
+ "rayon",
  "reth-auto-seal-consensus",
  "reth-beacon-consensus",
  "reth-blockchain-tree",
