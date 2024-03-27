@@ -509,55 +509,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "aptos-block-executor"
-version = "0.1.0"
-source = "git+ssh://git@github.com/pontem-network/lumio.git?rev=1db22a5f#1db22a5f73bfdb497edc3ca8d075139c963cecd5"
-dependencies = [
- "anyhow",
- "aptos-aggregator",
- "aptos-infallible",
- "aptos-logger",
- "aptos-metrics-core",
- "aptos-mvhashmap",
- "aptos-state-view",
- "aptos-types",
- "aptos-vm-logging",
- "arc-swap",
- "bcs 0.1.4",
- "claims",
- "crossbeam",
- "cstd",
- "dashmap",
- "move-binary-format",
- "move-core-types",
- "num_cpus",
- "once_cell 0.0.1",
- "parking_lot 0.12.1",
- "rayon",
-]
-
-[[package]]
-name = "aptos-block-partitioner"
-version = "0.1.0"
-source = "git+ssh://git@github.com/pontem-network/lumio.git?rev=1db22a5f#1db22a5f73bfdb497edc3ca8d075139c963cecd5"
-dependencies = [
- "anyhow",
- "aptos-crypto",
- "aptos-logger",
- "aptos-metrics-core",
- "aptos-types",
- "bcs 0.1.4",
- "clap 4.4.18",
- "cstd",
- "dashmap",
- "itertools 0.10.5",
- "move-core-types",
- "once_cell 0.0.1",
- "rand 0.7.3",
- "rayon",
-]
-
-[[package]]
 name = "aptos-crypto"
 version = "0.0.3"
 source = "git+ssh://git@github.com/pontem-network/lumio.git?rev=1db22a5f#1db22a5f73bfdb497edc3ca8d075139c963cecd5"
@@ -733,11 +684,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "aptos-infallible"
-version = "0.1.0"
-source = "git+ssh://git@github.com/pontem-network/lumio.git?rev=1db22a5f#1db22a5f73bfdb497edc3ca8d075139c963cecd5"
-
-[[package]]
 name = "aptos-log-derive"
 version = "0.1.0"
 source = "git+ssh://git@github.com/pontem-network/lumio.git?rev=1db22a5f#1db22a5f73bfdb497edc3ca8d075139c963cecd5"
@@ -775,15 +721,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "aptos-metrics-core"
-version = "0.1.0"
-source = "git+ssh://git@github.com/pontem-network/lumio.git?rev=1db22a5f#1db22a5f73bfdb497edc3ca8d075139c963cecd5"
-dependencies = [
- "anyhow",
- "prometheus",
-]
-
-[[package]]
 name = "aptos-move-stdlib"
 version = "0.1.1"
 source = "git+ssh://git@github.com/pontem-network/lumio.git?rev=1db22a5f#1db22a5f73bfdb497edc3ca8d075139c963cecd5"
@@ -801,21 +738,6 @@ dependencies = [
  "sha2 0.9.9",
  "sha3 0.9.1",
  "smallvec",
-]
-
-[[package]]
-name = "aptos-mvhashmap"
-version = "0.1.0"
-source = "git+ssh://git@github.com/pontem-network/lumio.git?rev=1db22a5f#1db22a5f73bfdb497edc3ca8d075139c963cecd5"
-dependencies = [
- "anyhow",
- "aptos-aggregator",
- "aptos-crypto",
- "aptos-infallible",
- "aptos-types",
- "bcs 0.1.4",
- "crossbeam",
- "dashmap",
 ]
 
 [[package]]
@@ -924,58 +846,6 @@ version = "0.1.0"
 source = "git+ssh://git@github.com/pontem-network/lumio.git?rev=1db22a5f#1db22a5f73bfdb497edc3ca8d075139c963cecd5"
 
 [[package]]
-name = "aptos-vm"
-version = "0.1.0"
-source = "git+ssh://git@github.com/pontem-network/lumio.git?rev=1db22a5f#1db22a5f73bfdb497edc3ca8d075139c963cecd5"
-dependencies = [
- "anyhow",
- "aptos-aggregator",
- "aptos-block-executor",
- "aptos-block-partitioner",
- "aptos-crypto",
- "aptos-crypto-derive",
- "aptos-framework",
- "aptos-gas-algebra",
- "aptos-gas-meter",
- "aptos-gas-schedule",
- "aptos-infallible",
- "aptos-logger",
- "aptos-memory-usage-tracker",
- "aptos-metrics-core",
- "aptos-move-stdlib",
- "aptos-mvhashmap",
- "aptos-native-interface",
- "aptos-state-view",
- "aptos-table-natives",
- "aptos-types",
- "aptos-utils",
- "aptos-vm-logging",
- "aptos-vm-types",
- "bcs 0.1.4",
- "crossbeam-channel",
- "cstd",
- "dashmap",
- "fail 0.5.1",
- "futures",
- "move-binary-format",
- "move-bytecode-utils",
- "move-bytecode-verifier",
- "move-core-types",
- "move-vm-runtime",
- "move-vm-test-utils",
- "move-vm-types",
- "num_cpus",
- "once_cell 0.0.1",
- "ouroboros 0.15.6",
- "rand 0.7.3",
- "rayon",
- "serde 1.0.197",
- "serde_json",
- "smallvec",
- "tracing",
-]
-
-[[package]]
 name = "aptos-vm-logging"
 version = "0.1.0"
 source = "git+ssh://git@github.com/pontem-network/lumio.git?rev=1db22a5f#1db22a5f73bfdb497edc3ca8d075139c963cecd5"
@@ -1028,12 +898,6 @@ checksum = "7d5a26814d8dcb93b0e5a0ff3c6d80a8843bafb21b39e8e18a6f05471870e110"
 dependencies = [
  "derive_arbitrary",
 ]
-
-[[package]]
-name = "arc-swap"
-version = "1.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7b3d0060af21e8d11a926981cc00c6c1541aa91dd64b9f881985c3da1094425f"
 
 [[package]]
 name = "ark-bls12-381"
@@ -2085,15 +1949,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "claims"
-version = "0.7.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b6995bbe186456c36307f8ea36be3eefe42f49d106896414e18efc4fb2f846b5"
-dependencies = [
- "autocfg",
-]
-
-[[package]]
 name = "clang-sys"
 version = "1.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2426,19 +2281,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "crossbeam"
-version = "0.8.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1137cd7e7fc0fb5d3c5a8678be38ec56e819125d8d7907411fe24ccb943faca8"
-dependencies = [
- "crossbeam-channel",
- "crossbeam-deque",
- "crossbeam-epoch",
- "crossbeam-queue",
- "crossbeam-utils",
-]
-
-[[package]]
 name = "crossbeam-channel"
 version = "0.5.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2462,15 +2304,6 @@ name = "crossbeam-epoch"
 version = "0.9.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5b82ac4a3c2ca9c3460964f020e1402edd5753411d7737aa39c3714ad1b5420e"
-dependencies = [
- "crossbeam-utils",
-]
-
-[[package]]
-name = "crossbeam-queue"
-version = "0.3.11"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "df0346b5d5e76ac2fe4e327c5fd1118d6be7c51dfb18f9b7922923f287471e35"
 dependencies = [
  "crossbeam-utils",
 ]
@@ -3558,17 +3391,6 @@ dependencies = [
  "lazy_static 1.4.0",
  "log",
  "rand 0.7.3",
-]
-
-[[package]]
-name = "fail"
-version = "0.5.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fe5e43d0f78a42ad591453aedb1d7ae631ce7ee445c7643691055a9ed8d3b01c"
-dependencies = [
- "log",
- "once_cell 1.19.0",
- "rand 0.8.5",
 ]
 
 [[package]]
@@ -5642,7 +5464,7 @@ source = "git+ssh://git@github.com/pontem-network/lumio.git?rev=1db22a5f#1db22a5
 dependencies = [
  "anyhow",
  "cstd",
- "fail 0.4.0",
+ "fail",
  "move-binary-format",
  "move-borrow-graph",
  "move-core-types",
@@ -6059,7 +5881,7 @@ source = "git+ssh://git@github.com/pontem-network/lumio.git?rev=1db22a5f#1db22a5
 dependencies = [
  "better_any",
  "cstd",
- "fail 0.4.0",
+ "fail",
  "move-binary-format",
  "move-bytecode-verifier",
  "move-core-types",
@@ -6068,20 +5890,6 @@ dependencies = [
  "sha3 0.9.1",
  "tracing",
  "zerolock",
-]
-
-[[package]]
-name = "move-vm-test-utils"
-version = "0.1.0"
-source = "git+ssh://git@github.com/pontem-network/lumio.git?rev=1db22a5f#1db22a5f73bfdb497edc3ca8d075139c963cecd5"
-dependencies = [
- "anyhow",
- "move-binary-format",
- "move-core-types",
- "move-table-extension",
- "move-vm-types",
- "once_cell 1.19.0",
- "serde 1.0.197",
 ]
 
 [[package]]
@@ -7174,20 +6982,6 @@ dependencies = [
  "bitflags 2.5.0",
  "chrono",
  "hex 0.4.3 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
-name = "prometheus"
-version = "0.13.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "449811d15fbdf5ceb5c1144416066429cf82316e2ec8ce0c1f6f8a02e7bbcf8c"
-dependencies = [
- "cfg-if",
- "fnv",
- "lazy_static 1.4.0",
- "memchr",
- "parking_lot 0.12.1",
- "thiserror",
 ]
 
 [[package]]
@@ -8612,11 +8406,8 @@ dependencies = [
  "alloy-sol-types",
  "anyhow",
  "aptos-gas-meter",
- "aptos-gas-schedule",
  "aptos-memory-usage-tracker",
  "aptos-types",
- "aptos-vm",
- "aptos-vm-types",
  "bcs 0.1.4",
  "bytemuck",
  "bytes",
@@ -8626,8 +8417,6 @@ dependencies = [
  "move-binary-format",
  "move-core-types",
  "move-executor",
- "move-vm-runtime",
- "move-vm-types",
  "once_cell 1.19.0",
  "rand 0.8.5",
  "reth-consensus-common",
