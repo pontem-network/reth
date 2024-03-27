@@ -12,11 +12,8 @@ use reth_eth_wire::{
     PartiallyValidData, RequestTxHashes, ValidAnnouncementData,
 };
 use reth_interfaces::p2p::error::{RequestError, RequestResult};
-use reth_metrics::common::mpsc::{
-    metered_unbounded_channel, UnboundedMeteredReceiver, UnboundedMeteredSender,
-};
 use reth_primitives::{PeerId, PooledTransactionsElement, TxHash};
-use schnellru::{ByLength, Unlimited};
+use schnellru::ByLength;
 #[cfg(debug_assertions)]
 use smallvec::{smallvec, SmallVec};
 use std::{
@@ -58,17 +55,11 @@ pub struct TransactionFetcher {
     /// which a [`GetPooledTransactions`] request is inflight.
     pub hashes_pending_fetch: LruCache<TxHash>,
     /// Tracks all hashes in the transaction fetcher.
-    pub(super) hashes_fetch_inflight_and_pending_fetch: LruMap<TxHash, TxFetchMetadata, Unlimited>,
+    pub(super) hashes_fetch_inflight_and_pending_fetch: LruMap<TxHash, TxFetchMetadata, ByLength>,
     /// Filter for valid announcement and response data.
     pub(super) filter_valid_message: MessageFilter,
     /// Info on capacity of the transaction fetcher.
     pub info: TransactionFetcherInfo,
-    /// [`FetchEvent`]s as a result of advancing inflight requests. This is an intermediary ¨
-    /// storage, before [`TransactionsManager`](super::TransactionsManager) streams them.
-    #[pin]
-    pub fetch_events_head: UnboundedMeteredReceiver<FetchEvent>,
-    /// Handle for queueing [`FetchEvent`]s as a result of advancing inflight requests.
-    pub fetch_events_tail: UnboundedMeteredSender<FetchEvent>,
 }
 
 // === impl TransactionFetcher ===
@@ -940,8 +931,6 @@ impl Stream for TransactionFetcher {
 
 impl Default for TransactionFetcher {
     fn default() -> Self {
-        let (fetch_events_tail, fetch_events_head) = metered_unbounded_channel("net::tx");
-
         Self {
             active_peers: LruMap::new(DEFAULT_MAX_COUNT_CONCURRENT_REQUESTS),
             inflight_requests: Default::default(),
@@ -949,11 +938,13 @@ impl Default for TransactionFetcher {
                 NonZeroUsize::new(DEFAULT_MAX_CAPACITY_CACHE_PENDING_FETCH)
                     .expect("buffered cache limit should be non-zero"),
             ),
-            hashes_fetch_inflight_and_pending_fetch: LruMap::new_unlimited(),
+            hashes_fetch_inflight_and_pending_fetch: LruMap::new(
+                DEFAULT_MAX_CAPACITY_CACHE_INFLIGHT_AND_PENDING_FETCH
+                    .try_into()
+                    .expect("proper size for inflight and pending fetch cache"),
+            ),
             filter_valid_message: Default::default(),
             info: TransactionFetcherInfo::default(),
-            fetch_events_head,
-            fetch_events_tail,
         }
     }
 }
