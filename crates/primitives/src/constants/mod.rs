@@ -46,7 +46,7 @@ pub const ETHEREUM_BLOCK_GAS_LIMIT: u64 = 30_000_000;
 /// 12.5% of 7 is less than 1.
 ///
 /// Note that min base fee under different 1559 parameterizations may differ, but there's no
-/// signifant harm in leaving this setting as is.
+/// significant harm in leaving this setting as is.
 /* ------LUMIO-START------- */
 pub const MIN_PROTOCOL_BASE_FEE: u64 = 0;
 

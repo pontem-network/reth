@@ -459,7 +459,7 @@ mod builder {
                 }
             };
 
-            // to realease the db reference drop evm.
+            // to release the db reference drop evm.
             drop(evm);
             // commit changes
             db.commit(state);
@@ -475,7 +475,7 @@ mod builder {
                 success: result.is_success(),
                 cumulative_gas_used,
                 logs: result
-                    .logs()
+                    .into_logs()
                     .into_iter()
                     /* ------LUMIO-START------- */
                     .chain(std::mem::take(&mut block_logs))
@@ -633,7 +633,7 @@ mod builder {
                     tx_type: tx.tx_type(),
                     success: result.is_success(),
                     cumulative_gas_used,
-                    logs: result.logs().into_iter().map(Into::into).collect(),
+                    logs: result.into_logs().into_iter().map(Into::into).collect(),
                     deposit_nonce: None,
                     deposit_receipt_version: None,
                 }));

@@ -216,7 +216,7 @@ pub static DEV: Lazy<Arc<ChainSpec>> = Lazy::new(|| {
             "2f980576711e3617a5e4d83dd539548ec0f7792007d505a3d2e9674833af2d7c"
         )),
         paris_block_and_final_difficulty: Some((0, U256::from(0))),
-        fork_timestamps: ForkTimestamps::default().shanghai(0),
+        fork_timestamps: ForkTimestamps::default().shanghai(0).cancun(0),
         hardforks: BTreeMap::from([
             (Hardfork::Frontier, ForkCondition::Block(0)),
             (Hardfork::Homestead, ForkCondition::Block(0)),
@@ -235,6 +235,7 @@ pub static DEV: Lazy<Arc<ChainSpec>> = Lazy::new(|| {
                 ForkCondition::TTD { fork_block: Some(0), total_difficulty: U256::from(0) },
             ),
             (Hardfork::Shanghai, ForkCondition::Timestamp(0)),
+            (Hardfork::Cancun, ForkCondition::Timestamp(0)),
         ]),
         base_fee_params: BaseFeeParamsKind::Constant(BaseFeeParams::ethereum()),
         deposit_contract: None, // TODO: do we even have?
@@ -742,7 +743,7 @@ impl ChainSpec {
         ForkFilter::new(head, self.genesis_hash(), self.genesis_timestamp(), forks)
     }
 
-    /// Compute the [`ForkId`] for the given [`Head`] folowing eip-6122 spec
+    /// Compute the [`ForkId`] for the given [`Head`] following eip-6122 spec
     pub fn fork_id(&self, head: &Head) -> ForkId {
         let mut forkhash = ForkHash::from(self.genesis_hash());
         let mut current_applied = 0;
@@ -817,8 +818,8 @@ impl ChainSpec {
         let mut hardforks_iter = self.forks_iter().peekable();
         while let Some((_, curr_cond)) = hardforks_iter.next() {
             if let Some((_, next_cond)) = hardforks_iter.peek() {
-                // peek and find the first occurence of ForkCondition::TTD (merge) , or in
-                // custom ChainSpecs, the first occurence of
+                // peek and find the first occurrence of ForkCondition::TTD (merge) , or in
+                // custom ChainSpecs, the first occurrence of
                 // ForkCondition::Timestamp. If curr_cond is ForkCondition::Block at
                 // this point, which it should be in most "normal" ChainSpecs,
                 // return its block_num
@@ -952,7 +953,7 @@ pub struct ForkTimestamps {
 }
 
 impl ForkTimestamps {
-    /// Creates a new [`ForkTimestamps`] from the given hardforks by extracing the timestamps
+    /// Creates a new [`ForkTimestamps`] from the given hardforks by extracting the timestamps
     fn from_hardforks(forks: &BTreeMap<Hardfork, ForkCondition>) -> Self {
         let mut timestamps = ForkTimestamps::default();
         if let Some(shanghai) = forks.get(&Hardfork::Shanghai).and_then(|f| f.as_timestamp()) {
@@ -1536,7 +1537,6 @@ mod tests {
     use super::*;
     use crate::{b256, hex, trie::TrieAccount, ChainConfig, GenesisAccount};
     use alloy_rlp::Encodable;
-    use bytes::BytesMut;
     use std::{collections::HashMap, str::FromStr};
 
     fn test_fork_ids(spec: &ChainSpec, cases: &[(Head, ForkId)]) {
@@ -1777,7 +1777,7 @@ Post-merge hard forks (timestamp based):
 
         // spec w/ only ForkCondition::Block - test the match arm for ForkCondition::Block to ensure
         // no regressions, for these ForkConditions(Block/TTD) - a separate chain spec definition is
-        // technically unecessary - but we include it here for thoroughness
+        // technically unnecessary - but we include it here for thoroughness
         let fork_cond_block_only_case = ChainSpec::builder()
             .chain(Chain::mainnet())
             .genesis(empty_genesis)
@@ -2607,7 +2607,7 @@ Post-merge hard forks (timestamp based):
 
         for (key, expected_rlp) in key_rlp {
             let account = chainspec.genesis.alloc.get(&key).expect("account should exist");
-            let mut account_rlp = BytesMut::new();
+            let mut account_rlp = Vec::new();
             TrieAccount::from(account.clone()).encode(&mut account_rlp);
             assert_eq!(account_rlp, expected_rlp)
         }

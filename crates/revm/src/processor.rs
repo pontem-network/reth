@@ -207,7 +207,7 @@ where
             .original_db /* ------LUMIO-END------- */
             .set_state_clear_flag(state_clear_flag);
 
-        let mut cfg: CfgEnvWithHandlerCfg =
+        let mut cfg =
             CfgEnvWithHandlerCfg::new_with_spec_id(self.evm.cfg().clone(), self.evm.spec_id());
         EvmConfig::fill_cfg_and_block_env(
             &mut cfg,
@@ -304,7 +304,7 @@ where
             fill_op_tx_env(self.evm.tx_mut(), transaction, sender, envelope_buf.into());
         }
 
-        let hash = transaction.hash();
+        let hash = transaction.hash_ref();
         let should_inspect = self.evm.context.external.should_inspect(self.evm.env(), hash);
         let out = if should_inspect {
             // push inspector handle register.
@@ -312,7 +312,7 @@ where
             let output = self.evm.transact();
             tracing::trace!(
                 target: "evm",
-                ?hash, ?output, ?transaction, env = ?self.evm.context.evm.env,
+                %hash, ?output, ?transaction, env = ?self.evm.context.evm.env,
                 "Executed transaction"
             );
             // pop last handle register
@@ -1086,7 +1086,7 @@ pub mod tests {
 
         // there is no system contract call so there should be NO STORAGE CHANGES
         // this means we'll check the transition state
-        let state = executor.evm.context.evm.db;
+        let state = executor.evm.context.evm.inner.db;
         let transition_state = state
             /* ------LUMIO-START------- */
             .original_db

@@ -5,7 +5,7 @@ use crate::{
 use alloy_rlp::{
     Decodable, Encodable, Error as RlpError, Header, EMPTY_LIST_CODE, EMPTY_STRING_CODE,
 };
-use bytes::{Buf, BytesMut};
+use bytes::Buf;
 use derive_more::{AsRef, Deref};
 use once_cell::sync::Lazy;
 use rayon::prelude::{IntoParallelIterator, ParallelIterator};
@@ -23,7 +23,7 @@ pub use legacy::TxLegacy;
 pub use meta::TransactionMeta;
 #[cfg(feature = "c-kzg")]
 pub use pooled::{PooledTransactionsElement, PooledTransactionsElementEcRecovered};
-#[cfg(all(feature = "c-kzg", feature = "arbitrary"))]
+#[cfg(all(feature = "c-kzg", any(test, feature = "arbitrary")))]
 pub use sidecar::generate_blob_sidecar;
 #[cfg(feature = "c-kzg")]
 pub use sidecar::{BlobTransaction, BlobTransactionSidecar, BlobTransactionValidationError};
@@ -1107,9 +1107,9 @@ impl TransactionSigned {
     ///
     /// See also [TransactionSigned::encode_enveloped]
     pub fn envelope_encoded(&self) -> Bytes {
-        let mut buf = BytesMut::new();
+        let mut buf = Vec::new();
         self.encode_enveloped(&mut buf);
-        buf.freeze().into()
+        buf.into()
     }
 
     /// Encodes the transaction into the "raw" format (e.g. `eth_sendRawTransaction`).
@@ -1506,7 +1506,7 @@ impl TransactionSignedEcRecovered {
         self.signed_transaction
     }
 
-    /// Desolve Self to its component
+    /// Dissolve Self to its component
     pub fn to_components(self) -> (TransactionSigned, Address) {
         (self.signed_transaction, self.signer)
     }
