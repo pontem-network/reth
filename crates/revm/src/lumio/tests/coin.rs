@@ -7,7 +7,7 @@ use crate::{
         mapper::map_account_address,
         value::ValueWithMeta,
     },
-    processor::tests::StateProviderTest,
+    test_utils::StateProviderTest,
 };
 use move_core_types::{
     account_address::AccountAddress,

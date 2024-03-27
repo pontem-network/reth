@@ -8700,7 +8700,6 @@ dependencies = [
  "reth-consensus-common",
  "reth-interfaces",
  "reth-node-api",
- "reth-node-ethereum",
  "reth-primitives",
  "reth-provider",
  "reth-trie",
