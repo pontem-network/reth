@@ -12,16 +12,12 @@ use reth_primitives::{
     StorageEntry, B256, U256,
 };
 use reth_trie::HashedPostState;
+pub use revm::db::states::OriginalValuesKnown;
 use revm::{
     db::{states::BundleState, BundleAccount},
     primitives::AccountInfo,
 };
 use std::collections::HashMap;
-
-pub use revm::db::states::OriginalValuesKnown;
-/* ------LUMIO-START------- */
-use reth_primitives::lumio::LumioBlockInfo;
-/* ------LUMIO-END------- */
 
 /// Bundle state of post execution changes and reverts
 #[derive(Default, Debug, Clone, PartialEq, Eq)]
@@ -36,7 +32,7 @@ pub struct BundleStateWithReceipts {
     receipts: Receipts,
     /* ------LUMIO-START------- */
     /// List of executed blocks.
-    blocks_info: Vec<LumioBlockInfo>,
+    blocks_info: Vec<reth_primitives::lumio::LumioBlockInfo>,
     /* ------LUMIO-END------- */
     /// First block of bundle state.
     first_block: BlockNumber,
@@ -59,7 +55,7 @@ impl BundleStateWithReceipts {
         receipts: Receipts,
         first_block: BlockNumber,
         /* ------LUMIO-START------- */
-        blocks_info: Vec<LumioBlockInfo>,
+        blocks_info: Vec<reth_primitives::lumio::LumioBlockInfo>,
         /* ------LUMIO-END------- */
     ) -> Self {
         Self {
@@ -78,7 +74,7 @@ impl BundleStateWithReceipts {
         receipts: Receipts,
         first_block: BlockNumber,
         /* ------LUMIO-START------- */
-        blocks_info: Vec<LumioBlockInfo>,
+        blocks_info: Vec<reth_primitives::lumio::LumioBlockInfo>,
         /* ------LUMIO-END------- */
     ) -> Self {
         // sort reverts by block number
@@ -400,8 +396,7 @@ mod tests {
             EmptyDB,
         },
         primitives::{
-            Account as RevmAccount, AccountInfo as RevmAccountInfo, AccountStatus, HashMap,
-            StorageSlot,
+            Account as RevmAccount, AccountInfo as RevmAccountInfo, AccountStatus, StorageSlot,
         },
         DatabaseCommit, State,
     };
