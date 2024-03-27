@@ -117,7 +117,6 @@ pub struct NodeCommand<Ext: clap::Args + fmt::Debug = NoArgs> {
     #[clap(flatten)]
     pub lumio: reth_node_core::args::lumio::LumioArgs,
     /* ------LUMIO-END------- */
-
     /// Additional cli arguments
     #[command(flatten, next_help_heading = "Extension")]
     pub ext: Ext,

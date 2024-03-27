@@ -147,7 +147,8 @@ where
 
         let pool = pool_builder.build_pool(context).await?;
         /* LUMIO START */
-        super::lumio::handle_genesis_update(context.config().genesis_update.as_ref(), pool.clone()).await?;
+        super::lumio::handle_genesis_update(context.config().genesis_update.as_ref(), pool.clone())
+            .await?;
         /* LUMIO END */
         let network = network_builder.build_network(context, pool.clone()).await?;
         let payload_builder = payload_builder.spawn_payload_service(context, pool.clone()).await?;

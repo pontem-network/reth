@@ -1,10 +1,9 @@
 use std::path::Path;
 
 use alloy_rlp::Decodable;
-use reth_primitives::TransactionSigned;
-use reth_primitives::FromRecoveredTransaction;
+use reth_primitives::{FromRecoveredTransaction, TransactionSigned};
+use reth_tracing::tracing::{info, warn};
 use reth_transaction_pool::TransactionPool;
-use reth_tracing::tracing::{warn, info};
 
 /// Load genesis update transaction.
 async fn load_genesis_update<T: FromRecoveredTransaction>(
@@ -21,7 +20,10 @@ async fn load_genesis_update<T: FromRecoveredTransaction>(
     Ok(Some(T::from_recovered_transaction(tx)))
 }
 
-pub(crate) async fn handle_genesis_update<P>(genesis_update: Option<&impl AsRef<Path>>, pool: P) -> eyre::Result<()>
+pub(crate) async fn handle_genesis_update<P>(
+    genesis_update: Option<&impl AsRef<Path>>,
+    pool: P,
+) -> eyre::Result<()>
 where
     P: TransactionPool + Send + Sync + 'static,
 {
