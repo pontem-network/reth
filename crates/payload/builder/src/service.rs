@@ -3,6 +3,11 @@
 //! The payload builder is responsible for building payloads.
 //! Once a new payload is created, it is continuously updated.
 
+/* ------LUMIO-START------- */
+#![allow(dead_code)]
+#![allow(unused_imports)]
+/* ------LUMIO-END------- */
+
 use crate::{
     error::PayloadBuilderError,
     events::{Events, PayloadEvents},
@@ -305,16 +310,18 @@ where
     fn resolve(&mut self, id: PayloadId) -> Option<PayloadFuture<Engine::BuiltPayload>> {
         trace!(%id, "resolving payload job");
 
-        let job = self.payload_jobs.iter().position(|(_, job_id)| *job_id == id)?;
-        let (fut, keep_alive) = self.payload_jobs[job].0.resolve();
+        let job: usize = self.payload_jobs.iter().position(|(_, job_id)| *job_id == id)?;
+        let (fut, _) = self.payload_jobs[job].0.resolve();
 
-        if keep_alive == KeepPayloadJobAlive::No {
-            let (_, id) = self.payload_jobs.remove(job);
-            trace!(%id, "terminated resolved job");
-        }
+        // if keep_alive == KeepPayloadJobAlive::No {
+        //     let (_, id) = self.payload_jobs.remove(job);
+        //     trace!(%id, "terminated resolved job");
+        // }
+        /* ------LUMIO-START------- */
+        /* ------LUMIO-END------- */
 
-        // Since the fees will not be known until the payload future is resolved / awaited, we wrap
-        // the future in a new future that will update the metrics.
+        // // Since the fees will not be known until the payload future is resolved / awaited, we
+        // wrap // the future in a new future that will update the metrics.
         let resolved_metrics = self.metrics.clone();
         let payload_events = self.payload_events.clone();
 
@@ -372,91 +379,138 @@ where
 
     fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
         let this = self.get_mut();
-        loop {
-            // notify the generator of new chain events
-            while let Poll::Ready(Some(new_head)) = this.chain_events.poll_next_unpin(cx) {
-                this.generator.on_new_state(new_head);
-            }
+        // loop {
+        //     // notify the generator of new chain events
+        //     while let Poll::Ready(Some(new_head)) = this.chain_events.poll_next_unpin(cx) {
+        //         this.generator.on_new_state(new_head);
+        //     }
 
-            // we poll all jobs first, so we always have the latest payload that we can report if
-            // requests
-            // we don't care about the order of the jobs, so we can just swap_remove them
-            for idx in (0..this.payload_jobs.len()).rev() {
-                let (mut job, id) = this.payload_jobs.swap_remove(idx);
+        //     // we poll all jobs first, so we always have the latest payload that we can report if
+        //     // requests
+        //     // we don't care about the order of the jobs, so we can just swap_remove them
+        //     for idx in (0..this.payload_jobs.len()).rev() {
+        //         let (mut job, id) = this.payload_jobs.swap_remove(idx);
 
-                // drain better payloads from the job
-                match job.poll_unpin(cx) {
-                    Poll::Ready(Ok(_)) => {
-                        this.metrics.set_active_jobs(this.payload_jobs.len());
-                        trace!(%id, "payload job finished");
-                    }
-                    Poll::Ready(Err(err)) => {
-                        warn!(%err, ?id, "Payload builder job failed; resolving payload");
-                        this.metrics.inc_failed_jobs();
-                        this.metrics.set_active_jobs(this.payload_jobs.len());
-                    }
-                    Poll::Pending => {
-                        // still pending, put it back
-                        this.payload_jobs.push((job, id));
-                    }
-                }
-            }
+        //         // drain better payloads from the job
+        //         match job.poll_unpin(cx) {
+        //             Poll::Ready(Ok(_)) => {
+        //                 this.metrics.set_active_jobs(this.payload_jobs.len());
+        //                 trace!(%id, "payload job finished");
+        //             }
+        //             Poll::Ready(Err(err)) => {
+        //                 warn!(%err, ?id, "Payload builder job failed; resolving payload");
+        //                 this.metrics.inc_failed_jobs();
+        //                 this.metrics.set_active_jobs(this.payload_jobs.len());
+        //             }
+        //             Poll::Pending => {
+        //                 // still pending, put it back
+        //                 this.payload_jobs.push((job, id));
+        //             }
+        //         }
+        //     }
 
-            // marker for exit condition
-            let mut new_job = false;
+        //     // marker for exit condition
+        //     let mut new_job = false;
 
-            // drain all requests
-            while let Poll::Ready(Some(cmd)) = this.command_rx.poll_next_unpin(cx) {
-                match cmd {
-                    PayloadServiceCommand::BuildNewPayload(attr, tx) => {
-                        let id = attr.payload_id();
-                        let mut res = Ok(id);
+        //     // drain all requests
+        //     while let Poll::Ready(Some(cmd)) = this.command_rx.poll_next_unpin(cx) {
+        //         match cmd {
+        //             PayloadServiceCommand::BuildNewPayload(attr, tx) => {
+        //                 let id = attr.payload_id();
+        //                 let mut res = Ok(id);
 
-                        if this.contains_payload(id) {
-                            debug!(%id, parent = %attr.parent(), "Payload job already in progress, ignoring.");
-                        } else {
-                            // no job for this payload yet, create one
-                            let parent = attr.parent();
-                            match this.generator.new_payload_job(attr) {
-                                Ok(job) => {
-                                    info!(%id, %parent, "New payload job created");
-                                    this.metrics.inc_initiated_jobs();
-                                    new_job = true;
-                                    this.payload_jobs.push((job, id));
-                                }
-                                Err(err) => {
-                                    this.metrics.inc_failed_jobs();
-                                    warn!(%err, %id, "Failed to create payload builder job");
-                                    res = Err(err);
-                                }
-                            }
-                        }
+        //                 if this.contains_payload(id) {
+        //                     debug!(%id, parent = %attr.parent(), "Payload job already in
+        // progress, ignoring.");                 } else {
+        //                     // no job for this payload yet, create one
+        //                     let parent = attr.parent();
+        //                     match this.generator.new_payload_job(attr) {
+        //                         Ok(job) => {
+        //                             info!(%id, %parent, "New payload job created");
+        //                             this.metrics.inc_initiated_jobs();
+        //                             new_job = true;
+        //                             this.payload_jobs.push((job, id));
+        //                         }
+        //                         Err(err) => {
+        //                             this.metrics.inc_failed_jobs();
+        //                             warn!(%err, %id, "Failed to create payload builder job");
+        //                             res = Err(err);
+        //                         }
+        //                     }
+        //                 }
 
+        //                 // return the id of the payload
+        //                 let _ = tx.send(res);
+        //             }
+        //             PayloadServiceCommand::BestPayload(id, tx) => {
+        //                 let _ = tx.send(this.best_payload(id));
+        //             }
+        //             PayloadServiceCommand::PayloadAttributes(id, tx) => {
+        //                 let attributes = this.payload_attributes(id);
+        //                 this.on_new_attributes(&attributes);
+        //                 let _ = tx.send(attributes);
+        //             }
+        //             PayloadServiceCommand::Resolve(id, tx) => {
+        //                 let _ = tx.send(this.resolve(id));
+        //             }
+        //             PayloadServiceCommand::Subscribe(tx) => {
+        //                 let new_rx = this.payload_events.subscribe();
+        //                 let _ = tx.send(new_rx);
+        //             }
+        //         }
+        //     }
+
+        //     if !new_job {
+        //         return Poll::Pending;
+        //     }
+        // }
+        /* ------LUMIO-START------- */
+        while let Poll::Ready(Some(cmd)) = this.command_rx.poll_next_unpin(cx) {
+            match cmd {
+                PayloadServiceCommand::BuildNewPayload(attr, tx) => {
+                    let id = attr.payload_id();
+                    let res = Ok(id);
+
+                    if this.contains_payload(id) {
+                        debug!(%id, parent = %attr.parent(), "Payload job already in progress, ignoring.");
                         // return the id of the payload
                         let _ = tx.send(res);
-                    }
-                    PayloadServiceCommand::BestPayload(id, tx) => {
-                        let _ = tx.send(this.best_payload(id));
-                    }
-                    PayloadServiceCommand::PayloadAttributes(id, tx) => {
-                        let attributes = this.payload_attributes(id);
-                        this.on_new_attributes(&attributes);
-                        let _ = tx.send(attributes);
-                    }
-                    PayloadServiceCommand::Resolve(id, tx) => {
-                        let _ = tx.send(this.resolve(id));
-                    }
-                    PayloadServiceCommand::Subscribe(tx) => {
-                        let new_rx = this.payload_events.subscribe();
-                        let _ = tx.send(new_rx);
+                    } else {
+                        // no job for this payload yet, create one
+                        let parent = attr.parent();
+                        match this.generator.new_payload_job(attr) {
+                            Ok(job) => {
+                                info!(%id, %parent, "New payload job created");
+                                this.metrics.inc_initiated_jobs();
+                                this.payload_jobs.clear();
+                                this.payload_jobs.push((job, id));
+                                let _ = tx.send(res);
+                            }
+                            Err(err) => {
+                                this.metrics.inc_failed_jobs();
+                                warn!(?err, %id, "Failed to create payload builder job");
+                                let _ = tx.send(res);
+                            }
+                        }
                     }
                 }
-            }
-
-            if !new_job {
-                return Poll::Pending
+                PayloadServiceCommand::BestPayload(id, tx) => {
+                    let _ = tx.send(this.best_payload(id));
+                }
+                PayloadServiceCommand::PayloadAttributes(id, tx) => {
+                    let _ = tx.send(this.payload_attributes(id));
+                }
+                PayloadServiceCommand::Resolve(id, tx) => {
+                    let _ = tx.send(this.resolve(id));
+                }
+                PayloadServiceCommand::Subscribe(tx) => {
+                    let new_rx = this.payload_events.subscribe();
+                    let _ = tx.send(new_rx);
+                }
             }
         }
+        Poll::Pending
+        /* ------LUMIO-END------- */
     }
 }
 

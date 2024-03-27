@@ -19,6 +19,9 @@ use revm::{
 use std::collections::HashMap;
 
 pub use revm::db::states::OriginalValuesKnown;
+/* ------LUMIO-START------- */
+use reth_primitives::lumio::LumioBlockInfo;
+/* ------LUMIO-END------- */
 
 /// Bundle state of post execution changes and reverts
 #[derive(Default, Debug, Clone, PartialEq, Eq)]
@@ -31,6 +34,10 @@ pub struct BundleStateWithReceipts {
     ///
     /// If receipt is None it means it is pruned.
     receipts: Receipts,
+    /* ------LUMIO-START------- */
+    /// List of executed blocks.
+    blocks_info: Vec<LumioBlockInfo>,
+    /* ------LUMIO-END------- */
     /// First block of bundle state.
     first_block: BlockNumber,
 }
@@ -47,8 +54,20 @@ pub type RevertsInit = HashMap<BlockNumber, HashMap<Address, AccountRevertInit>>
 
 impl BundleStateWithReceipts {
     /// Create Bundle State.
-    pub fn new(bundle: BundleState, receipts: Receipts, first_block: BlockNumber) -> Self {
-        Self { bundle, receipts, first_block }
+    pub fn new(
+        bundle: BundleState,
+        receipts: Receipts,
+        first_block: BlockNumber,
+        /* ------LUMIO-START------- */
+        blocks_info: Vec<LumioBlockInfo>,
+        /* ------LUMIO-END------- */
+    ) -> Self {
+        Self {
+            bundle,
+            receipts,
+            first_block,
+            /* ------LUMIO-START------- */ blocks_info, /* ------LUMIO-END------- */
+        }
     }
 
     /// Create new bundle state with receipts.
@@ -58,6 +77,9 @@ impl BundleStateWithReceipts {
         contracts_init: Vec<(B256, Bytecode)>,
         receipts: Receipts,
         first_block: BlockNumber,
+        /* ------LUMIO-START------- */
+        blocks_info: Vec<LumioBlockInfo>,
+        /* ------LUMIO-END------- */
     ) -> Self {
         // sort reverts by block number
         let mut reverts = revert_init.into_iter().collect::<Vec<_>>();
@@ -86,7 +108,12 @@ impl BundleStateWithReceipts {
             contracts_init.into_iter().map(|(code_hash, bytecode)| (code_hash, bytecode.0)),
         );
 
-        Self { bundle, receipts, first_block }
+        Self {
+            bundle,
+            receipts,
+            first_block,
+            /* ------LUMIO-START------- */ blocks_info, /* ------LUMIO-END------- */
+        }
     }
 
     /// Return revm bundle state.
@@ -320,6 +347,13 @@ impl BundleStateWithReceipts {
             }
         }
 
+        /* ------LUMIO-START------- */
+        let mut blocks_info_cursor = tx.cursor_write::<tables::LumioBlockInfos>()?;
+        for block_info in self.blocks_info {
+            blocks_info_cursor.append(block_info.number, block_info.block_info)?;
+        }
+        /* ------LUMIO-END------- */
+
         StateChanges(plain_state).write_to_db(tx)?;
 
         Ok(())
@@ -548,9 +582,14 @@ mod tests {
 
         state.merge_transitions(BundleRetention::Reverts);
 
-        BundleStateWithReceipts::new(state.take_bundle(), Receipts::new(), 1)
-            .write_to_db(provider.tx_ref(), OriginalValuesKnown::Yes)
-            .expect("Could not write bundle state to DB");
+        BundleStateWithReceipts::new(
+            state.take_bundle(),
+            Receipts::new(),
+            1,
+            /* ------LUMIO-START------- */ vec![], /* ------LUMIO-END------- */
+        )
+        .write_to_db(provider.tx_ref(), OriginalValuesKnown::Yes)
+        .expect("Could not write bundle state to DB");
 
         // Check plain storage state
         let mut storage_cursor = provider
@@ -646,9 +685,14 @@ mod tests {
         )]));
 
         state.merge_transitions(BundleRetention::Reverts);
-        BundleStateWithReceipts::new(state.take_bundle(), Receipts::new(), 2)
-            .write_to_db(provider.tx_ref(), OriginalValuesKnown::Yes)
-            .expect("Could not write bundle state to DB");
+        BundleStateWithReceipts::new(
+            state.take_bundle(),
+            Receipts::new(),
+            2,
+            /* ------LUMIO-START------- */ vec![], /* ------LUMIO-END------- */
+        )
+        .write_to_db(provider.tx_ref(), OriginalValuesKnown::Yes)
+        .expect("Could not write bundle state to DB");
 
         assert_eq!(
             storage_cursor.seek_exact(address_a).unwrap(),
@@ -710,9 +754,14 @@ mod tests {
             },
         )]));
         init_state.merge_transitions(BundleRetention::Reverts);
-        BundleStateWithReceipts::new(init_state.take_bundle(), Receipts::new(), 0)
-            .write_to_db(provider.tx_ref(), OriginalValuesKnown::Yes)
-            .expect("Could not write init bundle state to DB");
+        BundleStateWithReceipts::new(
+            init_state.take_bundle(),
+            Receipts::new(),
+            0,
+            /* ------LUMIO-START------- */ vec![], /* ------LUMIO-END------- */
+        )
+        .write_to_db(provider.tx_ref(), OriginalValuesKnown::Yes)
+        .expect("Could not write init bundle state to DB");
 
         let mut state = State::builder().with_bundle_update().build();
         state.insert_account_with_storage(
@@ -855,9 +904,14 @@ mod tests {
 
         let bundle = state.take_bundle();
 
-        BundleStateWithReceipts::new(bundle, Receipts::new(), 1)
-            .write_to_db(provider.tx_ref(), OriginalValuesKnown::Yes)
-            .expect("Could not write bundle state to DB");
+        BundleStateWithReceipts::new(
+            bundle,
+            Receipts::new(),
+            1,
+            /* ------LUMIO-START------- */ vec![], /* ------LUMIO-END------- */
+        )
+        .write_to_db(provider.tx_ref(), OriginalValuesKnown::Yes)
+        .expect("Could not write bundle state to DB");
 
         let mut storage_changeset_cursor = provider
             .tx_ref()
@@ -1018,9 +1072,14 @@ mod tests {
             },
         )]));
         init_state.merge_transitions(BundleRetention::Reverts);
-        BundleStateWithReceipts::new(init_state.take_bundle(), Receipts::new(), 0)
-            .write_to_db(provider.tx_ref(), OriginalValuesKnown::Yes)
-            .expect("Could not write init bundle state to DB");
+        BundleStateWithReceipts::new(
+            init_state.take_bundle(),
+            Receipts::new(),
+            0,
+            /* ------LUMIO-START------- */ vec![], /* ------LUMIO-END------- */
+        )
+        .write_to_db(provider.tx_ref(), OriginalValuesKnown::Yes)
+        .expect("Could not write init bundle state to DB");
 
         let mut state = State::builder().with_bundle_update().build();
         state.insert_account_with_storage(
@@ -1063,9 +1122,14 @@ mod tests {
 
         // Commit block #1 changes to the database.
         state.merge_transitions(BundleRetention::Reverts);
-        BundleStateWithReceipts::new(state.take_bundle(), Receipts::new(), 1)
-            .write_to_db(provider.tx_ref(), OriginalValuesKnown::Yes)
-            .expect("Could not write bundle state to DB");
+        BundleStateWithReceipts::new(
+            state.take_bundle(),
+            Receipts::new(),
+            1,
+            /* ------LUMIO-START------- */ vec![], /* ------LUMIO-END------- */
+        )
+        .write_to_db(provider.tx_ref(), OriginalValuesKnown::Yes)
+        .expect("Could not write bundle state to DB");
 
         let mut storage_changeset_cursor = provider
             .tx_ref()
@@ -1097,6 +1161,8 @@ mod tests {
             bundle: BundleState::default(),
             receipts: Receipts::from_vec(vec![vec![Some(Receipt::default()); 2]; 7]),
             first_block: 10,
+            /* ------LUMIO-START------- */
+            blocks_info: vec![], /* ------LUMIO-END------- */
         };
 
         let mut this = base.clone();
@@ -1158,10 +1224,15 @@ mod tests {
 
         let assert_state_root = |state: &State<EmptyDB>, expected: &PreState, msg| {
             assert_eq!(
-                BundleStateWithReceipts::new(state.bundle_state.clone(), Receipts::default(), 0)
-                    .hash_state_slow()
-                    .state_root(&tx)
-                    .unwrap(),
+                BundleStateWithReceipts::new(
+                    state.bundle_state.clone(),
+                    Receipts::default(),
+                    0,
+                    /* ------LUMIO-START------- */ vec![] /* ------LUMIO-END------- */
+                )
+                .hash_state_slow()
+                .state_root(&tx)
+                .unwrap(),
                 state_root(expected.clone().into_iter().map(|(address, (account, storage))| (
                     address,
                     (account, storage.into_iter())
@@ -1308,6 +1379,8 @@ mod tests {
             bundle: present_state,
             receipts: Receipts::from_vec(vec![vec![Some(Receipt::default()); 2]; 1]),
             first_block: 2,
+            /* ------LUMIO-START------- */
+            blocks_info: vec![], /* ------LUMIO-END------- */
         };
 
         test.prepend_state(previous_state);

@@ -329,17 +329,25 @@ impl StorageInner {
         // set the first block to find the correct index in bundle state
         executor.set_first_block(block.number);
 
-        let (receipts, gas_used) = executor.execute_transactions(block, U256::ZERO)?;
+        // let (receipts, gas_used) = executor.execute_transactions(block, U256::ZERO)?;
+        // // Save receipts.
+        // executor.save_receipts(receipts)?;
+        /* ------LUMIO-START------- */
+        let (receipts, gas_used, block_info) = executor.execute_transactions(block, U256::ZERO)?;
 
         // Save receipts.
-        executor.save_receipts(receipts)?;
+        executor.save_receipts(receipts, block_info)?;
+        /* ------LUMIO-END------- */
 
         // add post execution state change
         // Withdrawals, rewards etc.
         executor.apply_post_execution_state_change(block, U256::ZERO)?;
 
         // merge transitions
-        executor.db_mut().merge_transitions(BundleRetention::Reverts);
+        //executor.db_mut().merge_transitions(BundleRetention::Reverts);
+        /* ------LUMIO-START------- */
+        executor.db_mut().original_db.merge_transitions(BundleRetention::Reverts);
+        /* ------LUMIO-END------- */
 
         // apply post block changes
         Ok((executor.take_output_state(), gas_used))

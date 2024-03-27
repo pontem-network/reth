@@ -46,12 +46,20 @@ use tokio::{
     time::{Interval, Sleep},
 };
 use tracing::{debug, trace, warn};
+/* ------LUMIO-START------- */
+/// Lumio specific re-exports
+pub mod lumio;
+/* ------LUMIO-END------- */
+
+/// A basic payload job that continuously builds a payload with the best transactions from the pool.
+pub type BasicPayloadJobGenerator<Client, Pool, Tasks, Builder> =
+    lumio::LumioPayloadJobGenerator<Client, Pool, Tasks, Builder>;
 
 mod metrics;
 
 /// The [`PayloadJobGenerator`] that creates [`BasicPayloadJob`]s.
 #[derive(Debug)]
-pub struct BasicPayloadJobGenerator<Client, Pool, Tasks, Builder> {
+pub struct OldBasicPayloadJobGenerator<Client, Pool, Tasks, Builder> {
     /// The client that can interact with the chain.
     client: Client,
     /// txpool
@@ -74,7 +82,7 @@ pub struct BasicPayloadJobGenerator<Client, Pool, Tasks, Builder> {
 
 // === impl BasicPayloadJobGenerator ===
 
-impl<Client, Pool, Tasks, Builder> BasicPayloadJobGenerator<Client, Pool, Tasks, Builder> {
+impl<Client, Pool, Tasks, Builder> OldBasicPayloadJobGenerator<Client, Pool, Tasks, Builder> {
     /// Creates a new [BasicPayloadJobGenerator] with the given config and custom [PayloadBuilder]
     pub fn with_builder(
         client: Client,
@@ -135,7 +143,7 @@ impl<Client, Pool, Tasks, Builder> BasicPayloadJobGenerator<Client, Pool, Tasks,
 // === impl BasicPayloadJobGenerator ===
 
 impl<Client, Pool, Tasks, Builder> PayloadJobGenerator
-    for BasicPayloadJobGenerator<Client, Pool, Tasks, Builder>
+    for OldBasicPayloadJobGenerator<Client, Pool, Tasks, Builder>
 where
     Client: StateProviderFactory + BlockReaderIdExt + Clone + Unpin + 'static,
     Pool: TransactionPool + Unpin + 'static,

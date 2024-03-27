@@ -20,6 +20,11 @@ use reth_interfaces::consensus::Consensus;
 use reth_primitives::ChainSpec;
 use std::{net::SocketAddr, path::PathBuf, sync::Arc};
 
+/* ------LUMIO-START------- */
+/// lumio ext.
+pub mod lumio;
+/* ------LUMIO-END------- */
+
 /// Start the node
 #[derive(Debug, Parser)]
 pub struct NodeCommand<Ext: RethCliExt = ()> {
@@ -125,6 +130,12 @@ pub struct NodeCommand<Ext: RethCliExt = ()> {
     #[clap(flatten)]
     #[clap(next_help_heading = "Extension")]
     pub ext: Ext::Node,
+
+    /* ------LUMIO-START------- */
+    /// Lumio related arguments
+    #[clap(flatten)]
+    pub lumio: lumio::LumioArgs,
+    /* ------LUMIO-END------- */
 }
 
 impl<Ext: RethCliExt> NodeCommand<Ext> {
@@ -148,6 +159,9 @@ impl<Ext: RethCliExt> NodeCommand<Ext> {
             pruning,
             #[cfg(feature = "optimism")]
             rollup,
+            /* ------LUMIO-START------- */
+            lumio,
+            /* ------LUMIO-END------- */
             ..
         } = self;
         NodeCommand {
@@ -169,6 +183,7 @@ impl<Ext: RethCliExt> NodeCommand<Ext> {
             #[cfg(feature = "optimism")]
             rollup,
             ext,
+            /* ------LUMIO-START------- */ lumio, /* ------LUMIO-END------- */
         }
     }
 
@@ -193,6 +208,7 @@ impl<Ext: RethCliExt> NodeCommand<Ext> {
             #[cfg(feature = "optimism")]
             rollup,
             ext,
+            /* ------LUMIO-START------- */ lumio, /* ------LUMIO-END------- */
         } = self;
 
         // set up real database
@@ -216,6 +232,9 @@ impl<Ext: RethCliExt> NodeCommand<Ext> {
             pruning,
             #[cfg(feature = "optimism")]
             rollup,
+            /* ------LUMIO-START------- */
+            genesis_update: lumio.genesis_update,
+            /* ------LUMIO-END------- */
         };
 
         if with_unused_ports {

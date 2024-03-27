@@ -16,11 +16,17 @@ use reth_rpc_builder::{
 use reth_tasks::TaskSpawner;
 use reth_transaction_pool::TransactionPool;
 use std::{marker::PhantomData, sync::Arc};
+/* ------LUMIO-START------- */
+use reth_provider::LumioProvider;
+/* ------LUMIO-END------- */
 
 /// Helper trait to unify all provider traits for simplicity.
 pub trait FullProvider<DB: Database>:
     DatabaseProviderFactory<DB>
     + BlockReaderIdExt
+    /* ------LUMIO-START------- */
+    + LumioProvider
+    /* ------LUMIO-END------- */
     + AccountReader
     + StateProviderFactory
     + EvmEnvProvider
@@ -36,6 +42,9 @@ pub trait FullProvider<DB: Database>:
 impl<T, DB: Database> FullProvider<DB> for T where
     T: DatabaseProviderFactory<DB>
         + BlockReaderIdExt
+        /* ------LUMIO-START------- */
+        + LumioProvider
+        /* ------LUMIO-END------- */
         + AccountReader
         + StateProviderFactory
         + EvmEnvProvider

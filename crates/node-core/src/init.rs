@@ -151,6 +151,7 @@ pub fn insert_genesis_state<DB: Database>(
         contracts.into_iter().collect(),
         Receipts::new(),
         0,
+        /* ------LUMIO-START------- */ vec![], /* ------LUMIO-END------- */
     );
 
     bundle.write_to_db(tx, OriginalValuesKnown::Yes)?;

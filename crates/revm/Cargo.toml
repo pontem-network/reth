@@ -1,40 +1,77 @@
 [package]
-name = "reth-revm"
-version.workspace = true
-edition.workspace = true
-rust-version.workspace = true
-license.workspace = true
-homepage.workspace = true
-repository.workspace = true
 description = "reth specific revm utilities"
+edition.workspace = true
+homepage.workspace = true
+license.workspace = true
+name = "reth-revm"
+repository.workspace = true
+rust-version.workspace = true
+version.workspace = true
 
 [lints]
 workspace = true
 
 [dependencies]
+
+##------LUMIO-START-------
+alloy-primitives = {workspace = true}
+alloy-sol-types = {workspace = true}
+anyhow = {workspace = true}
+bcs = {workspace = true, features = ["std"]}
+bytemuck = {workspace = true}
+bytes = {workspace = true}
+ethabi = {workspace = true}
+hex = {workspace = true}
+hex-literal = {workspace = true}
+move-core-types = {workspace = true, features = ["std"]}
+move-executor = {workspace = true, features = ["std"]}
+once_cell = {workspace = true}
+serde = {workspace = true}
+
+# move vm
+aptos-gas-meter.workspace = true
+aptos-gas-schedule.workspace = true
+aptos-memory-usage-tracker.workspace = true
+aptos-types.workspace = true
+aptos-vm.workspace = true
+aptos-vm-types.workspace = true
+move-binary-format.workspace = true
+move-vm-runtime.workspace = true
+move-vm-types.workspace = true
+##------LUMIO-END---------
+
 # reth
-reth-primitives.workspace = true
-reth-interfaces.workspace = true
-reth-provider.workspace = true
 reth-consensus-common.workspace = true
+reth-interfaces.workspace = true
 reth-node-api.workspace = true
+reth-primitives.workspace = true
+reth-provider.workspace = true
 
 # revm
-revm.workspace = true
 revm-inspectors.workspace = true
+revm.workspace = true
 
 # common
 tracing.workspace = true
 
 [dev-dependencies]
-reth-trie.workspace = true
 reth-node-ethereum.workspace = true
+reth-trie.workspace = true
+##------LUMIO-START-------
+rand.workspace = true
+serde_json.workspace = true
+alloy-rlp.workspace = true
+##------LUMIO-END---------
 
 [features]
+##------LUMIO-START-------
+default = ["optimism"]
+##------LUMIO-END---------
+
+js-tracer = ["revm-inspectors/js-tracer"]
 optimism = [
   "revm/optimism",
   "reth-primitives/optimism",
   "reth-consensus-common/optimism",
   "reth-interfaces/optimism",
 ]
-js-tracer = ["revm-inspectors/js-tracer"]

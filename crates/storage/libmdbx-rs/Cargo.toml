@@ -28,7 +28,10 @@ tracing = { workspace = true, optional = true }
 ffi = { package = "reth-mdbx-sys", path = "./mdbx-sys" }
 
 [target.'cfg(not(windows))'.dependencies]
-libffi = "3.2.0"
+# libffi = "3.2.0"
+##------LUMIO-START-------
+libffi = { version = "3.2.0", features = ["system"]}
+##------LUMIO-END-------
 
 [features]
 default = []

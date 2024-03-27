@@ -24,6 +24,10 @@ use std::{
     ops::{RangeBounds, RangeInclusive},
     sync::Arc,
 };
+/* ------LUMIO-START------- */
+use crate::LumioProvider;
+use reth_interfaces::RethResult;
+/* ------LUMIO-END------- */
 
 /// A mock implementation for Provider interfaces.
 #[derive(Debug, Clone)]
@@ -37,6 +41,15 @@ pub struct MockEthProvider {
     /// Local chain spec
     pub chain_spec: Arc<ChainSpec>,
 }
+
+/* ------LUMIO-START------- */
+impl LumioProvider for MockEthProvider {
+    #[doc = "Get the block info for the given block number."]
+    fn get_block_info(&self, _: u64) -> RethResult<Option<Vec<u8>>> {
+        Ok(None)
+    }
+}
+/* ------LUMIO-END------- */
 
 impl Default for MockEthProvider {
     fn default() -> MockEthProvider {
@@ -84,6 +97,16 @@ impl ExtendedAccount {
         self.storage.extend(storage);
         self
     }
+
+    /* ------LUMIO-START------- */
+    /// Update storage
+    pub fn update_storage(
+        &mut self,
+        storage: impl IntoIterator<Item = (StorageKey, StorageValue)>,
+    ) {
+        self.storage.extend(storage)
+    }
+    /* ------LUMIO-END------- */
 }
 
 impl MockEthProvider {

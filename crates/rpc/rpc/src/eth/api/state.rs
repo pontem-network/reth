@@ -15,10 +15,20 @@ use reth_rpc_types::EIP1186AccountProofResponse;
 use reth_rpc_types_compat::proof::from_primitive_account_proof;
 use reth_transaction_pool::{PoolTransaction, TransactionPool};
 
+/* ------LUMIO-START------- */
+use reth_provider::LumioProvider;
+/* ------LUMIO-END------- */
+
 impl<Provider, Pool, Network, EvmConfig> EthApi<Provider, Pool, Network, EvmConfig>
 where
-    Provider:
-        BlockReaderIdExt + ChainSpecProvider + StateProviderFactory + EvmEnvProvider + 'static,
+    Provider: BlockReaderIdExt
+        /* ------LUMIO-START------- */
+        + LumioProvider
+        /* ------LUMIO-END------- */
+        + ChainSpecProvider
+        + StateProviderFactory
+        + EvmEnvProvider
+        + 'static,
     Pool: TransactionPool + Clone + 'static,
     Network: Send + Sync + 'static,
     EvmConfig: ConfigureEvmEnv + 'static,
@@ -113,6 +123,44 @@ where
             .await
             .map_err(|_| EthApiError::InternalBlockingTaskError)?
     }
+
+    /* ------LUMIO-START------- */
+    pub(crate) async fn get_lumio_block_info(&self, block_number: u64) -> EthResult<Option<Bytes>> {
+        let this = self.clone();
+        let result = self
+            .inner
+            .blocking_task_pool
+            .spawn(move || this.inner.provider.get_block_info(block_number))
+            .await
+            .map_err(|_| EthApiError::InternalBlockingTaskError)?;
+        Ok(result.map(|info| info.map(Bytes::from))?)
+    }
+
+    pub(crate) async fn get_lumio_block_infos(
+        &self,
+        block_number: u64,
+        limit: u64,
+    ) -> EthResult<Vec<Bytes>> {
+        let this = self.clone();
+        self.inner
+            .blocking_task_pool
+            .spawn(move || {
+                let mut blocks = Vec::new();
+                for i in 0..limit {
+                    let block_number = block_number + i;
+                    let block_info = this.inner.provider.get_block_info(block_number)?;
+                    if let Some(block_info) = block_info {
+                        blocks.push(Bytes::from(block_info));
+                    } else {
+                        break;
+                    }
+                }
+                Ok(blocks)
+            })
+            .await
+            .map_err(|_| EthApiError::InternalBlockingTaskError)?
+    }
+    /* ------LUMIO-END------- */
 }
 
 #[cfg(test)]

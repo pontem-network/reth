@@ -2,7 +2,7 @@
 
 use reth_interfaces::{provider::ProviderError, RethError};
 use reth_primitives::{revm_primitives::EVMError, B256};
-use reth_transaction_pool::BlobStoreError;
+use reth_transaction_pool::{blobstore::OtherError, BlobStoreError};
 use tokio::sync::oneshot;
 
 /// Possible error variants during payload building.
@@ -29,7 +29,30 @@ pub enum PayloadBuilderError {
     /// Any other payload building errors.
     #[error(transparent)]
     Other(Box<dyn std::error::Error + Send + Sync>),
+    /* ------LUMIO-START------- */
+    /// Magic specific payload building errors.
+    #[cfg(feature = "optimism")]
+    #[error(transparent)]
+    Magic(#[from] MagicPayloadBuilderError),
+    /* ------LUMIO-END------- */
 }
+
+/* ------LUMIO-START------- */
+impl Clone for PayloadBuilderError {
+    fn clone(&self) -> Self {
+        match self {
+            Self::MissingParentBlock(arg0) => Self::MissingParentBlock(arg0.clone()),
+            Self::ChannelClosed => Self::ChannelClosed,
+            Self::BlobStore(arg0) => Self::BlobStore(arg0.clone()),
+            Self::Internal(arg0) => Self::Internal(arg0.clone()),
+            Self::EvmExecutionError(arg0) => Self::EvmExecutionError(arg0.clone()),
+            Self::WithdrawalsBeforeShanghai => Self::WithdrawalsBeforeShanghai,
+            Self::Other(arg0) => Self::Other(Box::new(OtherError::new(arg0))),
+            Self::Magic(arg0) => Self::Magic(arg0.clone()),
+        }
+    }
+}
+/* ------LUMIO-END------- */
 
 impl PayloadBuilderError {
     /// Create a new error from a boxed error.
@@ -46,6 +69,17 @@ impl From<ProviderError> for PayloadBuilderError {
         PayloadBuilderError::Internal(RethError::Provider(error))
     }
 }
+
+/* ------LUMIO-START------- */
+/// Magic specific payload building errors.
+#[cfg(feature = "optimism")]
+#[derive(Debug, thiserror::Error, Clone)]
+pub enum MagicPayloadBuilderError {
+    /// Thrown when one of the cross-vm calls fails.
+    #[error("failed to execute cross-vm call")]
+    CrossVMCallFail,
+}
+/* ------LUMIO-END------- */
 
 impl From<oneshot::error::RecvError> for PayloadBuilderError {
     fn from(_: oneshot::error::RecvError) -> Self {

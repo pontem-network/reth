@@ -250,6 +250,9 @@ impl InsertBlockErrorKind {
                     BlockExecutionError::UnavailableForTest => false,
                     #[cfg(feature = "optimism")]
                     BlockExecutionError::OptimismBlockExecution(_) => false,
+                    /* ------LUMIO-START------- */
+                    BlockExecutionError::MagicBlockExecution(_) => false,
+                    /* ------LUMIO-END------- */
                 }
             }
             InsertBlockErrorKind::Tree(err) => {

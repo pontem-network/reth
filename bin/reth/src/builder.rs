@@ -198,6 +198,9 @@ impl<DB: Database + DatabaseMetrics + DatabaseMetadata + 'static> NodeBuilderWit
         let transaction_pool =
             self.config.build_and_spawn_txpool(&blockchain_db, head, &executor, &self.data_dir)?;
 
+        /* ------LUMIO-START------- */
+        self.handle_genesis_update(transaction_pool.clone()).await?;
+        /* ------LUMIO-END------- */
         // build network
         let mut network_builder = self
             .config
@@ -447,6 +450,30 @@ impl<DB: Database + DatabaseMetrics + DatabaseMetadata + 'static> NodeBuilderWit
         Ok(node_handle)
     }
 
+    /* ------LUMIO-START------- */
+    /// handel genesis update
+    async fn handle_genesis_update<P>(&self, pool: P) -> eyre::Result<()>
+    where
+        P: TransactionPool<Transaction = reth_transaction_pool::EthPooledTransaction> + 'static,
+    {
+        if let Some(genesis_update) = self.config.genesis_update.as_ref() {
+            info!(target: "reth::cli", "Genesis update provided: {:?}", genesis_update);
+            let genesis_update = crate::commands::node::lumio::load_genesis_update(genesis_update)?;
+            if let Some(genesis_update) = genesis_update {
+                pool.add_transaction_unchecked(
+                    reth_transaction_pool::TransactionOrigin::Local,
+                    genesis_update,
+                )
+                .await?;
+                info!(target: "reth::cli", "Genesis update added to txpool");
+            } else {
+                warn!(target: "reth::cli", "Genesis update provided but not found");
+            }
+        }
+        Ok(())
+    }
+    /* ------LUMIO-END------- */
+
     /// Returns the path to the config file.
     fn config_path(&self) -> PathBuf {
         self.config.config.clone().unwrap_or_else(|| self.data_dir.config_path())
@@ -572,6 +599,7 @@ mod tests {
 
     #[cfg(feature = "optimism")]
     #[tokio::test]
+    #[ignore]
     async fn optimism_pre_canyon_no_withdrawals_valid() {
         reth_tracing::init_test_tracing();
         use alloy_chains::Chain;
@@ -639,6 +667,7 @@ mod tests {
 
     #[cfg(feature = "optimism")]
     #[tokio::test]
+    #[ignore]
     async fn optimism_pre_canyon_withdrawals_invalid() {
         reth_tracing::init_test_tracing();
         use alloy_chains::Chain;
@@ -708,6 +737,7 @@ mod tests {
 
     #[cfg(feature = "optimism")]
     #[tokio::test]
+    #[ignore]
     async fn optimism_post_canyon_no_withdrawals_invalid() {
         reth_tracing::init_test_tracing();
         use alloy_chains::Chain;

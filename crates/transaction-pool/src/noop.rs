@@ -64,6 +64,16 @@ impl TransactionPool for NoopTransactionPool {
         Err(PoolError::other(hash, Box::new(NoopInsertError::new(transaction))))
     }
 
+    /* ------LUMIO-START------- */
+    async fn add_transaction_unchecked(
+        &self,
+        origin: TransactionOrigin,
+        transaction: Self::Transaction,
+    ) -> PoolResult<TxHash> {
+        self.add_transaction(origin, transaction).await
+    }
+    /* ------LUMIO-END------- */
+
     async fn add_transactions(
         &self,
         _origin: TransactionOrigin,

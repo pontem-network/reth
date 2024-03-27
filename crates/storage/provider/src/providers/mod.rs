@@ -73,6 +73,20 @@ impl<DB, Tree> BlockchainProvider<DB, Tree> {
     }
 }
 
+/* ------LUMIO-START------- */
+use crate::LumioProvider;
+impl<DB, Tree> LumioProvider for BlockchainProvider<DB, Tree>
+where
+    DB: Database,
+    Tree: Send + Sync,
+{
+    #[doc = " Get the block info for the given block number."]
+    fn get_block_info(&self, number: u64) -> RethResult<Option<Vec<u8>>> {
+        self.database.provider()?.get_block_info(number)
+    }
+}
+/* ------LUMIO-END------- */
+
 impl<DB, Tree> BlockchainProvider<DB, Tree>
 where
     DB: Database,

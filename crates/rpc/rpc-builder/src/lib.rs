@@ -203,6 +203,9 @@ use reth_tasks::{TaskSpawner, TokioTaskExecutor};
 use reth_transaction_pool::{noop::NoopTransactionPool, TransactionPool};
 // re-export for convenience
 pub use crate::eth::{EthConfig, EthHandlers};
+/* ------LUMIO-START------- */
+use reth_provider::LumioProvider;
+/* ------LUMIO-END------- */
 
 /// Auth server utilities.
 pub mod auth;
@@ -236,6 +239,9 @@ pub async fn launch<Provider, Pool, Network, Tasks, Events, EvmConfig>(
 ) -> Result<RpcServerHandle, RpcError>
 where
     Provider: BlockReaderIdExt
+        /* ------LUMIO-START------- */
+        + LumioProvider
+        /* ------LUMIO-END------- */
         + AccountReader
         + StateProviderFactory
         + EvmEnvProvider
@@ -427,6 +433,9 @@ impl<Provider, Pool, Network, Tasks, Events, EvmConfig>
     RpcModuleBuilder<Provider, Pool, Network, Tasks, Events, EvmConfig>
 where
     Provider: BlockReaderIdExt
+        /* ------LUMIO-START------- */
+        + LumioProvider
+        /* ------LUMIO-END------- */
         + AccountReader
         + StateProviderFactory
         + EvmEnvProvider
@@ -723,6 +732,9 @@ impl RpcModuleSelection {
     ) -> RpcModule<()>
     where
         Provider: BlockReaderIdExt
+            /* ------LUMIO-START------- */
+            + LumioProvider
+            /* ------LUMIO-END------- */
             + AccountReader
             + StateProviderFactory
             + EvmEnvProvider
@@ -1045,6 +1057,9 @@ impl<Provider, Pool, Network, Tasks, Events, EvmConfig>
     RethModuleRegistry<Provider, Pool, Network, Tasks, Events, EvmConfig>
 where
     Provider: BlockReaderIdExt
+        /* ------LUMIO-START------- */
+        + LumioProvider
+        /* ------LUMIO-END------- */
         + AccountReader
         + StateProviderFactory
         + EvmEnvProvider

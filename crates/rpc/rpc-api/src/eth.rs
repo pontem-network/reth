@@ -285,4 +285,14 @@ pub trait EthApi {
         keys: Vec<JsonStorageKey>,
         block_number: Option<BlockId>,
     ) -> RpcResult<EIP1186AccountProofResponse>;
+
+    /* ------LUMIO-START------- */
+    /// Returns the lumio block info.
+    #[method(name = "getLumioBlockInfo")]
+    async fn get_lumio_block_info(&self, block_number: u64) -> RpcResult<Option<Bytes>>;
+
+    /// Returns the lumio block infos.
+    #[method(name = "getLumioBlockInfos")]
+    async fn get_lumio_block_infos(&self, block_number: u64, limit: u64) -> RpcResult<Vec<Bytes>>;
+    /* ------LUMIO-END------- */
 }

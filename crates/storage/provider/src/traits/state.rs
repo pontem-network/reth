@@ -6,7 +6,7 @@ use reth_primitives::{
     trie::AccountProof, Address, BlockHash, BlockId, BlockNumHash, BlockNumber, BlockNumberOrTag,
     Bytecode, StorageKey, StorageValue, B256, KECCAK_EMPTY, U256,
 };
-use reth_trie::updates::TrieUpdates;
+pub use reth_trie::updates::TrieUpdates;
 
 /// Type alias of boxed [StateProvider].
 pub type StateProviderBox = Box<dyn StateProvider>;

@@ -113,6 +113,31 @@ codegen-units = 1
 incremental = false
 
 [workspace.dependencies]
+##------LUMIO-START-------
+libffi = { version = "*", features = ["system"] }
+anyhow = "1.0"
+bytemuck = "1.14.0"
+ethabi = { version = "18.0.0", default-features = false, features = ["serde"] }
+hex = "0.4"
+lazy_static = "1.4.0"
+
+bcs = { git = "ssh://git@github.com/pontem-network/lumio.git", rev = "182c134c5a4e8aeda23c9657f251e3a7081968e9", features = ["std"] }
+move-core-types = { git = "ssh://git@github.com/pontem-network/lumio.git", rev = "182c134c5a4e8aeda23c9657f251e3a7081968e9", features = [
+  "std",
+] }
+move-executor = { git = "ssh://git@github.com/pontem-network/lumio.git", rev = "182c134c5a4e8aeda23c9657f251e3a7081968e9", features = ["std"] }
+
+aptos-gas-meter = { git = "ssh://git@github.com/pontem-network/lumio.git", rev = "182c134c5a4e8aeda23c9657f251e3a7081968e9" }
+aptos-gas-schedule = { git = "ssh://git@github.com/pontem-network/lumio.git", rev = "182c134c5a4e8aeda23c9657f251e3a7081968e9" }
+aptos-memory-usage-tracker = { git = "ssh://git@github.com/pontem-network/lumio.git", rev = "182c134c5a4e8aeda23c9657f251e3a7081968e9" }
+aptos-types = { git = "ssh://git@github.com/pontem-network/lumio.git", rev = "182c134c5a4e8aeda23c9657f251e3a7081968e9" }
+aptos-vm = { git = "ssh://git@github.com/pontem-network/lumio.git", rev = "182c134c5a4e8aeda23c9657f251e3a7081968e9" }
+aptos-vm-types = { git = "ssh://git@github.com/pontem-network/lumio.git", rev = "182c134c5a4e8aeda23c9657f251e3a7081968e9" }
+move-binary-format = { git = "ssh://git@github.com/pontem-network/lumio.git", rev = "182c134c5a4e8aeda23c9657f251e3a7081968e9" }
+move-vm-runtime = { git = "ssh://git@github.com/pontem-network/lumio.git", rev = "182c134c5a4e8aeda23c9657f251e3a7081968e9" }
+move-vm-types = { git = "ssh://git@github.com/pontem-network/lumio.git", rev = "182c134c5a4e8aeda23c9657f251e3a7081968e9" }
+##------LUMIO-END-------
+
 # reth
 reth = { path = "bin/reth" }
 reth-auto-seal-consensus = { path = "crates/consensus/auto-seal" }
@@ -175,7 +200,7 @@ revm-primitives = { version = "2.1.0", features = ["std"], default-features = fa
 revm-inspectors = { git = "https://github.com/paradigmxyz/evm-inspectors", rev = "75a187b" }
 
 # eth
-alloy-chains = { version = "0.1", feature = ["serde", "rlp", "arbitrary"] }
+alloy-chains = { git = "https://github.com/pontem-network/chains", rev = "a2b49d804d4c8e37b544a9fe18783a696e133f6d", feature = ["serde", "rlp", "arbitrary"] }
 alloy-primitives = "0.6"
 alloy-dyn-abi = "0.6"
 alloy-sol-types = "0.6"
@@ -252,7 +277,7 @@ secp256k1 = { version = "0.27.0", default-features = false, features = [
     "rand-std",
     "recovery",
 ] }
-enr = { version = "0.9", default-features = false, features = ["k256"] }
+enr = { version = "0.9.1", default-features = false, features = ["k256"] }
 
 # for eip-4844
 c-kzg = "0.4.2"
@@ -276,3 +301,10 @@ test-fuzz = "5"
 [workspace.metadata.cargo-udeps.ignore]
 # ignored because this is mutually exclusive with the optimism payload builder via feature flags
 normal = ["reth-ethereum-payload-builder", "reth-node-ethereum"]
+
+##------LUMIO-START-------
+[patch.crates-io]
+# curve25519-dalek = "4.1.1"
+# curve25519-dalek = { git = "https://github.com/dalek-cryptography/curve25519-dalek.git", rev = "0cd099a" }
+x25519-dalek = { git = "https://github.com/aptos-labs/x25519-dalek", branch = "zeroize_v1" }
+##------LUMIO-END---------

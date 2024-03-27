@@ -354,6 +354,28 @@ where
         results.pop().expect("result length is the same as the input")
     }
 
+    /* ------LUMIO-START------- */
+    async fn add_transaction_unchecked(
+        &self,
+        origin: TransactionOrigin,
+        transaction: Self::Transaction,
+    ) -> PoolResult<TxHash> {
+        use validate::ValidTransaction;
+
+        let tx = TransactionValidationOutcome::Valid {
+            balance: U256::MAX,
+            state_nonce: 0,
+            transaction: ValidTransaction::Valid(transaction),
+            propagate: match origin {
+                TransactionOrigin::External => false,
+                TransactionOrigin::Local => false,
+                TransactionOrigin::Private => false,
+            },
+        };
+        self.pool.add_transactions(origin, std::iter::once(tx)).pop().expect("exists; qed")
+    }
+    /* ------LUMIO-END------- */
+
     async fn add_transactions(
         &self,
         origin: TransactionOrigin,

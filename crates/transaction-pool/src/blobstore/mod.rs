@@ -84,6 +84,43 @@ pub enum BlobStoreError {
     Other(Box<dyn std::error::Error + Send + Sync>),
 }
 
+/* ------LUMIO-START------- */
+impl Clone for BlobStoreError {
+    fn clone(&self) -> Self {
+        match self {
+            Self::MissingSidecar(arg0) => Self::MissingSidecar(arg0.clone()),
+            Self::DecodeError(arg0) => Self::DecodeError(arg0.clone()),
+            Self::Other(arg0) => Self::Other(Box::new(OtherError::new(arg0))),
+        }
+    }
+}
+
+/// Cloneable other error.
+pub struct OtherError(String);
+
+impl OtherError {
+    /// New cloneable error.
+    pub fn new(err: &Box<dyn std::error::Error + Send + Sync>) -> Self {
+        Self(err.to_string())
+    }
+}
+
+impl fmt::Debug for OtherError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_tuple("OtherError").field(&self.0).finish()
+    }
+}
+
+impl fmt::Display for OtherError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+impl std::error::Error for OtherError {}
+
+/* ------LUMIO-END------- */
+
 /// Keeps track of the size of the blob store.
 #[derive(Debug, Default)]
 pub(crate) struct BlobStoreSize {

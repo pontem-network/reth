@@ -37,6 +37,17 @@ mod builder {
     };
     use tracing::{debug, trace, warn};
 
+    /* ------LUMIO-START------- */
+    use reth_interfaces::{executor::BlockExecutionError, RethError};
+    use reth_revm::lumio::{
+        cross_vm,
+        executor::MoveExecutor,
+        mapper::map_account_address_to_move,
+        transition_state::TransitionState,
+        tx_type::{LumioExtension, MagicTx},
+    };
+    /* ------LUMIO-END------- */
+
     /// Optimism's payload builder
     #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
     #[non_exhaustive]
@@ -152,8 +163,12 @@ mod builder {
             db.merge_transitions(BundleRetention::PlainState);
 
             // calculate the state root
-            let bundle_state =
-                BundleStateWithReceipts::new(db.take_bundle(), Receipts::new(), block_number);
+            let bundle_state = BundleStateWithReceipts::new(
+                db.take_bundle(),
+                Receipts::new(),
+                block_number,
+                /* ------LUMIO-START------- */ vec![], /* ------LUMIO-END------- */
+            );
             let state_root = state.state_root(&bundle_state).map_err(|err| {
                 warn!(target: "payload_builder", parent_hash=%parent_block.hash(), %err, "failed to calculate state root for empty payload");
                 err
@@ -233,10 +248,13 @@ mod builder {
 
         let state_provider = client.state_by_block_hash(config.parent_block.hash())?;
         let state = StateProviderDatabase::new(&state_provider);
-        let mut db = State::builder()
+        let db = State::builder()
             .with_database_ref(cached_reads.as_db(&state))
             .with_bundle_update()
             .build();
+        /* ------LUMIO-START------- */
+        let mut db = TransitionState::new(db);
+        /* ------LUMIO-END------- */
         let extra_data = config.extra_data();
         let PayloadConfig {
             initialized_block_env,
@@ -261,6 +279,35 @@ mod builder {
         ));
 
         let mut total_fees = U256::ZERO;
+        /* ------LUMIO-START------- */
+        let block_number = initialized_block_env.number.to::<u64>();
+        let block_timestamp = initialized_block_env.timestamp.to::<u64>();
+        let mut mv = MoveExecutor::default();
+        let new_block_result = mv.new_block(block_number, block_timestamp, &mut db);
+        let mut block_logs = match new_block_result {
+            Ok((ResultAndState { result, state: new_block_state }, _)) => match result {
+                revm::primitives::ExecutionResult::Success {
+                    reason: _,
+                    gas_used: _,
+                    gas_refunded: _,
+                    logs,
+                    output: _,
+                } => {
+                    // commit changes
+                    db.original_db.commit(new_block_state);
+                    logs
+                }
+                err => {
+                    trace!("failed to execute new block:{:?}", err);
+                    return Err(custom_error(format!("failed to execute new block: {:?}", err)));
+                }
+            },
+            Err(err) => {
+                trace!(?err, "failed to execute new block tx");
+                return Err(make_payload_error(err));
+            }
+        };
+        /* ------LUMIO-END------- */
 
         let block_number = initialized_block_env.number.to::<u64>();
 
@@ -286,7 +333,7 @@ mod builder {
         reth_revm::optimism::ensure_create2_deployer(
             chain_spec.clone(),
             attributes.payload_attributes.timestamp,
-            &mut db,
+            &mut db.original_db,
         )
         .map_err(|_| {
             PayloadBuilderError::other(OptimismPayloadBuilderError::ForceCreate2DeployerFail)
@@ -314,6 +361,32 @@ mod builder {
                 PayloadBuilderError::other(OptimismPayloadBuilderError::TransactionEcRecoverFailed)
             })?;
 
+            /* ------LUMIO-START------- */
+            if sequencer_tx.is_deposit() {
+                let recipient = sequencer_tx.to().unwrap();
+                let gas_limit = sequencer_tx.gas_limit();
+                let create_acc_result = mv.create_move_account(recipient, gas_limit, &mut db);
+
+                match create_acc_result {
+                    Ok(result) => match result {
+                        Some((res_and_state, _)) => {
+                            let ResultAndState { result: _, state } = res_and_state;
+                            // TODO: add test case where cross tx failed and check that deposit tx
+                            // worked!
+                            db.original_db.commit(state);
+                        }
+                        None => {
+                            // Do not commit state if account already exists.
+                        }
+                    },
+                    Err(err) => {
+                        trace!(?err, "failed to execute create new account tx");
+                        return Err(make_payload_error(err));
+                    }
+                }
+            };
+            /* ------LUMIO-END------- */
+
             // Cache the depositor account prior to the state transition for the deposit nonce.
             //
             // Note that this *only* needs to be done post-regolith hardfork, as deposit nonces
@@ -321,7 +394,8 @@ mod builder {
             // nonces, so we don't need to touch the DB for those.
             let depositor = (is_regolith && sequencer_tx.is_deposit())
                 .then(|| {
-                    db.load_cache_account(sequencer_tx.signer())
+                    db.original_db
+                        .load_cache_account(sequencer_tx.signer())
                         .map(|acc| acc.account_info().unwrap_or_default())
                 })
                 .transpose()
@@ -339,6 +413,9 @@ mod builder {
                     tx_env_with_recovered(&sequencer_tx),
                 ))
                 .build();
+            /* ------LUMIO-START------- */
+            evm.context.evm.env.cfg.disable_base_fee = true;
+            /* ------LUMIO-END------- */
 
             let ResultAndState { result, state } = match evm.transact() {
                 Ok(res) => res,
@@ -371,7 +448,14 @@ mod builder {
                 tx_type: sequencer_tx.tx_type(),
                 success: result.is_success(),
                 cumulative_gas_used,
-                logs: result.logs().into_iter().map(Into::into).collect(),
+                logs: result
+                    .logs()
+                    .into_iter()
+                    /* ------LUMIO-START------- */
+                    .chain(std::mem::take(&mut block_logs))
+                    /* ------LUMIO-END------- */
+                    .map(Into::into)
+                    .collect(),
                 deposit_nonce: depositor.map(|account| account.nonce),
                 // The deposit receipt version was introduced in Canyon to indicate an update to how
                 // receipt hashes should be computed when set. The state transition process
@@ -384,6 +468,9 @@ mod builder {
                     .then_some(1),
             }));
 
+            /* ------LUMIO-START------- */
+            db.finalize();
+            /* ------LUMIO-END------- */
             // append transaction to the list of executed transactions
             executed_txs.push(sequencer_tx.into_signed());
         }
@@ -424,36 +511,92 @@ mod builder {
                     ))
                     .build();
 
-                let ResultAndState { result, state } = match evm.transact() {
-                    Ok(res) => res,
-                    Err(err) => {
-                        match err {
+                /* ------LUMIO-START------- */
+                let ResultAndState { mut result, state } = match MagicTx::from(tx.as_ref()) {
+                    MagicTx::Eth(_) => match evm.transact() {
+                        Ok(res_and_state) => res_and_state,
+                        Err(err) => match err {
                             EVMError::Transaction(err) => {
                                 if matches!(err, InvalidTransaction::NonceTooLow { .. }) {
+                                    dbg!("Nonce too low");
                                     // if the nonce is too low, we can skip this transaction
-                                    trace!(target: "payload_builder", %err, ?tx, "skipping nonce too low transaction");
+                                    trace!(target: "payload_builder", ?err, ?tx, "skipping nonce too low transaction");
                                 } else {
-                                    // if the transaction is invalid, we can skip it and all of its
-                                    // descendants
-                                    trace!(target: "payload_builder", %err, ?tx, "skipping invalid transaction and its descendants");
+                                    // if the transaction is invalid, we can skip it and all of
+                                    // its descendants
+                                    trace!(target: "payload_builder", ?err, ?tx, "skipping invalid transaction and its descendants");
                                     best_txs.mark_invalid(&pool_tx);
                                 }
 
-                                continue
+                                continue;
                             }
                             err => {
-                                // this is an error that we should treat as fatal for this attempt
-                                return Err(PayloadBuilderError::EvmExecutionError(err))
+                                // this is an error that we should treat as fatal for this
+                                // attempt
+                                return Err(PayloadBuilderError::EvmExecutionError(err));
+                            }
+                        },
+                    },
+                    MagicTx::Move(LumioExtension::Signed(move_tx), _) => {
+                        match mv.transact(move_tx, tx.signer(), &mut evm.context.evm.db) {
+                            Ok((res, _)) => res,
+                            Err(err) => {
+                                trace!(target: "payload_builder", ?err, ?tx, "Error in transaction, skipping.");
+                                best_txs.mark_invalid(&pool_tx);
+                                pool.remove_transactions(vec![tx.hash()]);
+                                continue;
+                            }
+                        }
+                    }
+                    MagicTx::Move(LumioExtension::Genesis(move_tx), _) => {
+                        match mv.execute_genesis(move_tx, &mut evm.context.evm.db) {
+                            Ok((res, _)) => res,
+                            Err(err) => {
+                                trace!(target: "payload_builder", ?err, ?tx, "Error in transaction, skipping.");
+                                best_txs.mark_invalid(&pool_tx);
+                                pool.remove_transactions(vec![tx.hash()]);
+                                continue;
                             }
                         }
                     }
                 };
-                // drop evm so db is released.
-                drop(evm);
-                // commit changes
-                db.commit(state);
+                /* ------LUMIO-END------- */
+                // // drop evm so db is released.
+                // drop(evm);
+                /* ------LUMIO-START------- */
+                /* ------LUMIO-END------- */
 
-                let gas_used = result.gas_used();
+                // commit changes
+                evm.context.evm.db.commit(state);
+
+                let mut gas_used = result.gas_used();
+
+                /* ------LUMIO-START------- */
+                let signer = tx.signer();
+
+                let cross_result = cross_vm::run_cross_calls(
+                    &result,
+                    &mut evm,
+                    &mut mv,
+                    pool_tx.gas_limit() - gas_used,
+                    map_account_address_to_move(signer),
+                );
+
+                match cross_result {
+                    Ok(available_gas) => {
+                        gas_used = pool_tx.gas_limit() - available_gas;
+                        evm.context.evm.db.finalize();
+                    }
+                    Err(err) => {
+                        // redefine origin tx execution result
+                        result = revm::primitives::ExecutionResult::Revert {
+                            gas_used,
+                            output: err.to_string().into_bytes().into(),
+                        };
+                        evm.context.evm.db.rollback();
+                    }
+                }
+                /* ------LUMIO-END------- */
 
                 // add gas used by the transaction to cumulative gas used, before creating the
                 // receipt
@@ -468,6 +611,12 @@ mod builder {
                     deposit_nonce: None,
                     deposit_receipt_version: None,
                 }));
+
+                /* ------LUMIO-START------- */
+                evm.context.evm.db.finalize();
+                // drop evm so db is released.
+                drop(evm);
+                /* ------LUMIO-END------- */
 
                 // update add to total fees
                 let miner_fee = tx
@@ -487,7 +636,7 @@ mod builder {
         }
 
         let WithdrawalsOutcome { withdrawals_root, withdrawals } = commit_withdrawals(
-            &mut db,
+            &mut db.original_db,
             &chain_spec,
             attributes.payload_attributes.timestamp,
             attributes.payload_attributes.withdrawals,
@@ -495,12 +644,13 @@ mod builder {
 
         // merge all transitions into bundle state, this would apply the withdrawal balance changes
         // and 4788 contract call
-        db.merge_transitions(BundleRetention::PlainState);
+        db.original_db.merge_transitions(BundleRetention::PlainState);
 
         let bundle = BundleStateWithReceipts::new(
-            db.take_bundle(),
+            db.original_db.take_bundle(),
             Receipts::from_vec(vec![receipts]),
             block_number,
+            /* ------LUMIO-START------- */ vec![], /* ------LUMIO-END------- */
         );
         let receipts_root = bundle
             .receipts_root_slow(
@@ -574,4 +724,14 @@ mod builder {
 
         Ok(BuildOutcome::Better { payload, cached_reads })
     }
+
+    /* ------LUMIO-START------- */
+    fn make_payload_error(block_execution_error: BlockExecutionError) -> PayloadBuilderError {
+        PayloadBuilderError::Internal(RethError::from(block_execution_error))
+    }
+
+    fn custom_error(msg: String) -> PayloadBuilderError {
+        make_payload_error(BlockExecutionError::CanonicalRevert { inner: msg })
+    }
+    /* ------LUMIO-END------- */
 }

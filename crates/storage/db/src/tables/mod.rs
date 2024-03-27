@@ -369,6 +369,10 @@ tables! {
 
     /// Stores the highest pruned block number and prune mode of each prune segment.
     table PruneCheckpoints<Key = PruneSegment, Value = PruneCheckpoint>;
+    /*------LUMIO-START-------*/
+     /// Stores block info.
+    table LumioBlockInfos<Key = BlockNumber, Value = Vec<u8>>;
+    /*------LUMIO-END-------*/
 }
 
 // Alias types.

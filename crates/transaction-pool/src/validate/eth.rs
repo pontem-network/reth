@@ -146,6 +146,23 @@ where
         origin: TransactionOrigin,
         mut transaction: Tx,
     ) -> TransactionValidationOutcome<Tx> {
+        /* ------LUMIO-START------- */
+        use reth_revm::lumio::tx_type::LumioTxType;
+
+        // check lumio transaction. Discard generic transactions.
+        match LumioTxType::from((transaction.to(), transaction.input())) {
+            LumioTxType::Genesis => {
+                return TransactionValidationOutcome::Invalid(
+                    transaction,
+                    InvalidTransactionError::TxTypeNotSupported.into(),
+                )
+            }
+            LumioTxType::MoveTransaction | LumioTxType::Eth => {
+                // accept
+            }
+        }
+        /* ------LUMIO-END------- */
+
         #[cfg(feature = "optimism")]
         if transaction.is_deposit() || transaction.is_eip4844() {
             return TransactionValidationOutcome::Invalid(

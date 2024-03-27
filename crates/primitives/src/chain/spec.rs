@@ -1022,6 +1022,9 @@ impl From<Genesis> for ChainSpec {
             (Hardfork::London, genesis.config.london_block),
             (Hardfork::ArrowGlacier, genesis.config.arrow_glacier_block),
             (Hardfork::GrayGlacier, genesis.config.gray_glacier_block),
+            /* ------LUMIO-START------- */
+            (Hardfork::Bedrock, Some(0)),
+            /* ------LUMIO-END------- */
         ];
         let mut hardforks = hardfork_opts
             .iter()
@@ -1043,6 +1046,9 @@ impl From<Genesis> for ChainSpec {
         let time_hardfork_opts = [
             (Hardfork::Shanghai, genesis.config.shanghai_time),
             (Hardfork::Cancun, genesis.config.cancun_time),
+            /* ------LUMIO-START------- */
+            (Hardfork::Regolith, Some(0)),
+            /* ------LUMIO-END------- */
         ];
 
         let time_hardforks = time_hardfork_opts

@@ -22,6 +22,10 @@ use revm::{
     Evm, Handler, State, StateBuilder,
 };
 use std::{sync::Arc, time::Instant};
+/* ------LUMIO-START------- */
+use crate::lumio::{executor::MoveExecutor, transition_state::TransitionState};
+use reth_primitives::lumio::LumioBlockInfo;
+/* ------LUMIO-END------- */
 
 #[cfg(feature = "optimism")]
 use reth_primitives::revm::env::fill_op_tx_env;
@@ -56,14 +60,20 @@ use tracing::{debug, trace};
 pub struct EVMProcessor<'a, EvmConfig> {
     /// The configured chain-spec
     pub(crate) chain_spec: Arc<ChainSpec>,
-    /// revm instance that contains database and env environment.
-    pub(crate) evm: Evm<'a, InspectorStack, StateDBBox<'a, ProviderError>>,
+    // revm instance that contains database and env environment.
+    // pub(crate) evm: Evm<'a, InspectorStack, StateDBBox<'a, ProviderError>>,
+    /* ------LUMIO-START------- */
+    pub(crate) evm: Evm<'a, InspectorStack, TransitionState<StateDBBox<'a, ProviderError>>>,
+    /* ------LUMIO-END------- */
     /// The collection of receipts.
     /// Outer vector stores receipts for each block sequentially.
     /// The inner vector stores receipts ordered by transaction number.
     ///
     /// If receipt is None it means it is pruned.
     pub(crate) receipts: Receipts,
+    /* ------LUMIO-START------- */
+    pub(crate) blocks: Vec<LumioBlockInfo>,
+    /* ------LUMIO-END------- */
     /// First block will be initialized to `None`
     /// and be set to the block number of first block executed.
     pub(crate) first_block: Option<BlockNumber>,
@@ -79,6 +89,10 @@ pub struct EVMProcessor<'a, EvmConfig> {
     pub(crate) stats: BlockExecutorStats,
     /// The type that is able to configure the EVM environment.
     _evm_config: EvmConfig,
+    /* ------LUMIO-START------- */
+    /// Move executor
+    pub(crate) mv: MoveExecutor,
+    /* ------LUMIO-END------- */
 }
 
 impl<'a, EvmConfig> EVMProcessor<'a, EvmConfig>
@@ -100,7 +114,11 @@ where
 
         // Hook and inspector stack that we want to invoke on that hook.
         let stack = InspectorStack::new(InspectorStackConfig::default());
-        let evm = evm_config.evm_with_inspector(db, stack);
+        //let evm = evm_config.evm_with_inspector(db, stack);
+        /* ------LUMIO-START------- */
+        let evm = evm_config.evm_with_inspector(TransitionState::new(db), stack);
+        /* ------LUMIO-END------- */
+
         EVMProcessor {
             chain_spec,
             evm,
@@ -111,6 +129,10 @@ where
             pruning_address_filter: None,
             stats: BlockExecutorStats::default(),
             _evm_config: evm_config,
+            /* ------LUMIO-START------- */
+            mv: MoveExecutor::new(),
+            blocks: Vec::new(),
+            /* ------LUMIO-END------- */
         }
     }
 
@@ -135,7 +157,10 @@ where
         evm_config: EvmConfig,
     ) -> Self {
         let stack = InspectorStack::new(InspectorStackConfig::default());
-        let evm = evm_config.evm_with_inspector(revm_state, stack);
+        // let evm = evm_config.evm_with_inspector(revm_state, stack);
+        /* ------LUMIO-START------- */
+        let evm = evm_config.evm_with_inspector(TransitionState::new(revm_state), stack);
+        /* ------LUMIO-END------- */
         EVMProcessor {
             chain_spec,
             evm,
@@ -146,6 +171,10 @@ where
             pruning_address_filter: None,
             stats: BlockExecutorStats::default(),
             _evm_config: evm_config,
+            /* ------LUMIO-START------- */
+            mv: MoveExecutor::new(),
+            blocks: Vec::new(),
+            /* ------LUMIO-END------- */
         }
     }
 
@@ -159,10 +188,16 @@ where
         self.first_block = Some(num);
     }
 
+    ///// Returns a reference to the database
+    // pub fn db_mut(&mut self) -> &mut StateDBBox<'a, ProviderError> {
+    //     &mut self.evm.context.evm.db
+    // }
+    /* ------LUMIO-START------- */
     /// Returns a reference to the database
-    pub fn db_mut(&mut self) -> &mut StateDBBox<'a, ProviderError> {
+    pub fn db_mut(&mut self) -> &mut TransitionState<StateDBBox<'a, ProviderError>> {
         &mut self.evm.context.evm.db
     }
+    /* ------LUMIO-END------- */
 
     /// Initializes the config and block env.
     pub(crate) fn init_env(&mut self, header: &Header, total_difficulty: U256) {
@@ -170,7 +205,9 @@ where
         let state_clear_flag =
             self.chain_spec.fork(Hardfork::SpuriousDragon).active_at_block(header.number);
 
-        self.db_mut().set_state_clear_flag(state_clear_flag);
+        self.db_mut() /* ------LUMIO-START------- */
+            .original_db /* ------LUMIO-END------- */
+            .set_state_clear_flag(state_clear_flag);
 
         let mut cfg: CfgEnvWithHandlerCfg =
             CfgEnvWithHandlerCfg::new_with_spec_id(self.evm.cfg().clone(), self.evm.spec_id());
@@ -182,6 +219,9 @@ where
             total_difficulty,
         );
         *self.evm.cfg_mut() = cfg.cfg_env;
+        /* ------LUMIO-START------- */
+        self.evm.context.evm.env.cfg.disable_base_fee = true;
+        /* ------LUMIO-END------- */
         self.evm.handler = Handler::new(cfg.handler_cfg);
     }
 
@@ -226,6 +266,8 @@ where
             // drain balances from hardcoded addresses.
             let drained_balance: u128 = self
                 .db_mut()
+                /* ------LUMIO-START------- */
+                .original_db /* ------LUMIO-END------- */
                 .drain_balances(DAO_HARDKFORK_ACCOUNTS)
                 .map_err(|_| BlockValidationError::IncrementBalanceFailed)?
                 .into_iter()
@@ -236,6 +278,8 @@ where
         }
         // increment balances
         self.db_mut()
+            /* ------LUMIO-START------- */
+            .original_db /* ------LUMIO-END------- */
             .increment_balances(balance_increments)
             .map_err(|_| BlockValidationError::IncrementBalanceFailed)?;
 
@@ -293,10 +337,17 @@ where
         &mut self,
         block: &BlockWithSenders,
         total_difficulty: U256,
-    ) -> Result<Vec<Receipt>, BlockExecutionError> {
+    ) -> Result<
+        (
+            Vec<Receipt>,   /* ------LUMIO-START------- */
+            LumioBlockInfo, /* ------LUMIO-END------- */
+        ),
+        BlockExecutionError,
+    > {
         self.init_env(&block.header, total_difficulty);
         self.apply_beacon_root_contract_call(block)?;
-        let (receipts, cumulative_gas_used) = self.execute_transactions(block, total_difficulty)?;
+        let (receipts, cumulative_gas_used, block_info) =
+            self.execute_transactions(block, total_difficulty)?;
 
         // Check if gas used matches the value set in header.
         if block.gas_used != cumulative_gas_used {
@@ -326,23 +377,36 @@ where
         } else {
             BundleRetention::PlainState
         };
-        self.db_mut().merge_transitions(retention);
+        self.db_mut() /* ------LUMIO-START------- */
+            .original_db /* ------LUMIO-END------- */
+            .merge_transitions(retention);
         self.stats.merge_transitions_duration += time.elapsed();
 
         if self.first_block.is_none() {
             self.first_block = Some(block.number);
         }
 
-        Ok(receipts)
+        Ok((
+            receipts,
+            /* ------LUMIO-START------- */ block_info, /* ------LUMIO-END------- */
+        ))
     }
 
     /// Save receipts to the executor.
-    pub fn save_receipts(&mut self, receipts: Vec<Receipt>) -> Result<(), BlockExecutionError> {
+    pub fn save_receipts(
+        &mut self,
+        receipts: Vec<Receipt>,
+        /* ------LUMIO-START------- */
+        block_info: LumioBlockInfo, /* ------LUMIO-END------- */
+    ) -> Result<(), BlockExecutionError> {
         let mut receipts = receipts.into_iter().map(Option::Some).collect();
         // Prune receipts if necessary.
         self.prune_receipts(&mut receipts)?;
         // Save receipts.
         self.receipts.push(receipts);
+        /* ------LUMIO-START------- */
+        self.blocks.push(block_info);
+        /* ------LUMIO-END------- */
         Ok(())
     }
 
@@ -455,6 +519,20 @@ where
             return Ok((Vec::new(), 0))
         }
 
+        /* ------LUMIO-START------- */
+        let number = block.header.number;
+        let timestamp = block.header.timestamp;
+        let eth = self.evm.db().expect("db is not set");
+        let ResultAndState { result, state } = self.mv.new_block(number, timestamp, eth)?;
+        if !result.is_success() {
+            return Err(BlockExecutionError::CanonicalCommit {
+                inner: format!("Failed to create block:{:?}", result),
+            });
+        }
+        let mut log = result.into_logs();
+        self.db_mut().commit(state);
+        /* ------LUMIO-END------- */
+
         let mut cumulative_gas_used = 0;
         let mut receipts = Vec::with_capacity(block.body.len());
         for (sender, transaction) in block.transactions_with_sender() {
@@ -470,7 +548,16 @@ where
                 .into())
             }
             // Execute transaction.
-            let ResultAndState { result, state } = self.transact(transaction, *sender)?;
+            // let ResultAndState { result, state } = self.transact(transaction, *sender)?;
+            /* ------LUMIO-START------- */
+            let ResultAndState { result, state } = match MagicTx::from(transaction) {
+                MagicTx::Eth(transaction) => self.transact(transaction, *sender)?,
+                MagicTx::Move(transaction, _) => {
+                    self.mv.transact(transaction, sender, self.evm.db().expect("db is not set"))?
+                }
+            };
+            /* ------LUMIO-END------- */
+
             trace!(
                 target: "evm",
                 ?transaction, ?result, ?state,
@@ -497,7 +584,9 @@ where
                 logs: result.into_logs().into_iter().map(Into::into).collect(),
             });
         }
-
+        /* ------LUMIO-START------- */
+        self.mv.finalize();
+        /* ------LUMIO-END------- */
         Ok((receipts, cumulative_gas_used))
     }
 
@@ -579,7 +668,7 @@ pub fn compare_receipts_root_and_logs_bloom(
 }
 
 #[cfg(test)]
-mod tests {
+pub mod tests {
     use super::*;
     use reth_interfaces::provider::ProviderResult;
     use reth_node_ethereum::EthEvmConfig;
@@ -601,7 +690,7 @@ mod tests {
     static BEACON_ROOT_CONTRACT_CODE: Bytes = bytes!("3373fffffffffffffffffffffffffffffffffffffffe14604d57602036146024575f5ffd5b5f35801560495762001fff810690815414603c575f5ffd5b62001fff01545f5260205ff35b5f5ffd5b62001fff42064281555f359062001fff015500");
 
     #[derive(Debug, Default, Clone, Eq, PartialEq)]
-    struct StateProviderTest {
+    pub struct StateProviderTest {
         accounts: HashMap<Address, (HashMap<StorageKey, U256>, Account)>,
         contracts: HashMap<B256, Bytecode>,
         block_hash: HashMap<u64, B256>,
@@ -609,7 +698,7 @@ mod tests {
 
     impl StateProviderTest {
         /// Insert account.
-        fn insert_account(
+        pub fn insert_account(
             &mut self,
             address: Address,
             mut account: Account,
@@ -623,6 +712,25 @@ mod tests {
             }
             self.accounts.insert(address, (storage, account));
         }
+
+        /* ------LUMIO-START------- */
+        ///load account from the database
+        pub fn load_account(&mut self, address: Address) -> Option<&mut Account> {
+            self.accounts.get_mut(&address).map(|(_, acc)| acc)
+        }
+
+        /// Get account.
+        pub fn get_account(
+            &self,
+            address: Address,
+        ) -> Option<(Account, Option<Bytes>, HashMap<StorageKey, U256>)> {
+            let (storage, account) = self.accounts.get(&address)?.clone();
+            let bytecode = account
+                .bytecode_hash
+                .map(|hash| self.contracts.get(&hash).map(|bytecode| bytecode.original_bytes()))?;
+            Some((account, bytecode, storage))
+        }
+        /* ------LUMIO-END------- */
     }
 
     impl AccountReader for StateProviderTest {
@@ -982,6 +1090,9 @@ mod tests {
         // this means we'll check the transition state
         let state = executor.evm.context.evm.db;
         let transition_state = state
+            /* ------LUMIO-START------- */
+            .original_db
+            /* ------LUMIO-END------- */
             .transition_state
             .clone()
             .expect("the evm should be initialized with bundle updates");

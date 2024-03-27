@@ -202,6 +202,10 @@ pub struct NodeConfig {
     /// Rollup related arguments
     #[cfg(feature = "optimism")]
     pub rollup: crate::args::RollupArgs,
+    /* ------LUMIO-START------- */
+    ///Lumio genesis update
+    pub genesis_update: Option<PathBuf>,
+    /* ------LUMIO-END------- */
 }
 
 impl NodeConfig {
@@ -224,6 +228,7 @@ impl NodeConfig {
             pruning: PruningArgs::default(),
             #[cfg(feature = "optimism")]
             rollup: crate::args::RollupArgs::default(),
+            genesis_update: None,
         };
 
         // set all ports to zero by default for test instances
@@ -930,6 +935,7 @@ impl Default for NodeConfig {
             pruning: PruningArgs::default(),
             #[cfg(feature = "optimism")]
             rollup: crate::args::RollupArgs::default(),
+            genesis_update: None,
         }
     }
 }

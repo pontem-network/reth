@@ -31,6 +31,11 @@ pub use revm::{self, *};
 /// Ethereum DAO hardfork state change data.
 pub mod eth_dao_fork;
 
+/* ------LUMIO-START------- */
+/// Lumio;
+pub mod lumio;
+/* ------LUMIO-END------- */
+
 /// Optimism-specific implementation and utilities for the executor
 #[cfg(feature = "optimism")]
 pub mod optimism;

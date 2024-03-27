@@ -48,6 +48,10 @@ use revm::{
     Inspector,
 };
 
+/* ------LUMIO-START------- */
+use reth_provider::LumioProvider;
+/* ------LUMIO-END------- */
+
 #[cfg(feature = "optimism")]
 use crate::eth::api::optimism::OptimismTxMeta;
 #[cfg(feature = "optimism")]
@@ -339,8 +343,14 @@ impl<Provider, Pool, Network, EvmConfig> EthTransactions
     for EthApi<Provider, Pool, Network, EvmConfig>
 where
     Pool: TransactionPool + Clone + 'static,
-    Provider:
-        BlockReaderIdExt + ChainSpecProvider + StateProviderFactory + EvmEnvProvider + 'static,
+    /* ------LUMIO-START------- */
+    Provider: LumioProvider
+        /* ------LUMIO-END------- */
+        + BlockReaderIdExt
+        + ChainSpecProvider
+        + StateProviderFactory
+        + EvmEnvProvider
+        + 'static,
     Network: NetworkInfo + Send + Sync + 'static,
     EvmConfig: ConfigureEvmEnv + 'static,
 {
@@ -775,15 +785,33 @@ where
             .map_err(|_| EthApiError::InternalBlockingTaskError)?
     }
 
+    // async fn transact_call_at(
+    //     &self,
+    //     request: TransactionRequest,
+    //     at: BlockId,
+    //     overrides: EvmOverrides,
+    // ) -> EthResult<(ResultAndState, EnvWithHandlerCfg)> { self.spawn_with_call_at(request, at,
+    //   overrides, move |mut db, env| transact(&mut db, env)) .await
+    // }
+    /* ------LUMIO-START------- */
     async fn transact_call_at(
         &self,
         request: TransactionRequest,
         at: BlockId,
         overrides: EvmOverrides,
     ) -> EthResult<(ResultAndState, EnvWithHandlerCfg)> {
-        self.spawn_with_call_at(request, at, overrides, move |mut db, env| transact(&mut db, env))
-            .await
+        use reth_revm::lumio::tx_type::MagicView;
+
+        self.spawn_with_call_at(request, at, overrides, move |mut db, env| {
+            let input = env.tx.data.as_ref();
+            match MagicView::try_from(input) {
+                Ok(magic) => Ok((crate::eth::revm_utils::transact_magic(db, magic), env)),
+                Err(_) => transact(&mut db, env),
+            }
+        })
+        .await
     }
+    /* ------LUMIO-END------- */
 
     async fn spawn_inspect_call_at<I>(
         &self,

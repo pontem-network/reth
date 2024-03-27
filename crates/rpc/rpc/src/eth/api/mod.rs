@@ -38,6 +38,10 @@ use std::{
 
 use tokio::sync::{oneshot, Mutex};
 
+/* ------LUMIO-START------- */
+use reth_provider::LumioProvider;
+/* ------LUMIO-END------- */
+
 mod block;
 mod call;
 pub(crate) mod fee_history;
@@ -383,8 +387,14 @@ impl<Provider, Pool, Events, EvmConfig> Clone for EthApi<Provider, Pool, Events,
 impl<Provider, Pool, Network, EvmConfig> EthApiSpec for EthApi<Provider, Pool, Network, EvmConfig>
 where
     Pool: TransactionPool + Clone + 'static,
-    Provider:
-        BlockReaderIdExt + ChainSpecProvider + StateProviderFactory + EvmEnvProvider + 'static,
+    Provider: BlockReaderIdExt
+        /* ------LUMIO-START------- */
+        + LumioProvider
+        /* ------LUMIO-END------- */
+        + ChainSpecProvider
+        + StateProviderFactory
+        + EvmEnvProvider
+        + 'static,
     Network: NetworkInfo + 'static,
     EvmConfig: ConfigureEvmEnv + 'static,
 {

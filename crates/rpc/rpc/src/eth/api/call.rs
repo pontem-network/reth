@@ -32,6 +32,18 @@ use revm::{
     DatabaseCommit,
 };
 use tracing::trace;
+/* ------LUMIO-START------- */
+use reth_provider::LumioProvider;
+/* ------LUMIO-END------- */
+
+/* ------LUMIO-START------- */
+use reth_interfaces::executor::BlockExecutionError;
+use reth_revm::lumio::{cross_vm, executor::MoveExecutor, mapper::map_account_address_to_move};
+use revm::Database;
+use revm_primitives::{Address, OutOfGasError};
+use std::fmt::Display;
+use tracing::debug;
+/* ------LUMIO-END------- */
 
 // Gas per transaction not creating a contract.
 const MIN_TRANSACTION_GAS: u64 = 21_000u64;
@@ -40,8 +52,14 @@ const MIN_CREATE_GAS: u64 = 53_000u64;
 impl<Provider, Pool, Network, EvmConfig> EthApi<Provider, Pool, Network, EvmConfig>
 where
     Pool: TransactionPool + Clone + 'static,
-    Provider:
-        BlockReaderIdExt + ChainSpecProvider + StateProviderFactory + EvmEnvProvider + 'static,
+    Provider: BlockReaderIdExt
+        /* ------LUMIO-START------- */
+        + LumioProvider
+        /* ------LUMIO-END------- */
+        + ChainSpecProvider
+        + StateProviderFactory
+        + EvmEnvProvider
+        + 'static,
     Network: NetworkInfo + Send + Sync + 'static,
     EvmConfig: ConfigureEvmEnv + 'static,
 {
@@ -199,7 +217,14 @@ where
         let request_gas = request.gas;
         let request_gas_price = request.gas_price;
         let env_gas_limit = block.gas_limit;
-
+        /* ------LUMIO-START------- */
+        let request = TransactionRequest {
+            chain_id: request
+                .chain_id
+                .or_else(|| Some(cfg.chain_id.try_into().expect("u64 == Uint<64, 1>"))),
+            ..request
+        };
+        /* ------LUMIO-END------- */
         // get the highest possible gas limit, either the request's set value or the currently
         // configured gas limit
         let mut highest_gas_limit = request.gas.unwrap_or(block.gas_limit);
@@ -263,9 +288,33 @@ where
         }
 
         let (res, env) = ethres?;
-        match res.result {
-            ExecutionResult::Success { .. } => {
+
+        /* ------LUMIO-START------- */
+        let caller = env.tx.caller;
+        let env_tx_gas_limit = env.tx.gas_limit;
+        debug!(target: "estimate_cross_calls", env_tx_gas_limit, ?caller);
+        /* ------LUMIO-END------- */
+
+        // match res.result {
+        //     ExecutionResult::Success { .. } => {
+        /* ------LUMIO-START------- */
+        let gas_used_by_cross_calls = match res.result {
+            ExecutionResult::Success { gas_used, .. } => {
+                /* ------LUMIO-END------- */
                 // succeeded
+
+                /* ------LUMIO-START------- */
+                // estimate cross calls
+                let available_gas_for_cross_calls = env_tx_gas_limit - gas_used;
+                transact_cross_calls(
+                    env.clone(),
+                    &mut db,
+                    env_tx_gas_limit,
+                    available_gas_for_cross_calls,
+                    &res.result,
+                    caller,
+                )?
+                /* ------LUMIO-END------- */
             }
             ExecutionResult::Halt { reason, gas_used } => {
                 // here we don't check for invalid opcode because already executed with highest gas
@@ -280,15 +329,20 @@ where
                 } else {
                     // the transaction did revert
                     Err(RpcInvalidTransactionError::Revert(RevertError::new(output)).into())
-                }
+                };
             }
-        }
+        };
 
         // at this point we know the call succeeded but want to find the _best_ (lowest) gas the
         // transaction succeeds with. we  find this by doing a binary search over the
         // possible range NOTE: this is the gas the transaction used, which is less than the
         // transaction requires to succeed
-        let gas_used = res.result.gas_used();
+
+        // let gas_used = res.result.gas_used();
+        /* ------LUMIO-START------- */
+        let gas_used = res.result.gas_used() + gas_used_by_cross_calls;
+        /* ------LUMIO-END------- */
+
         // the lowest value is capped by the gas it takes for a transfer
         let mut lowest_gas_limit =
             if env.tx.transact_to.is_create() { MIN_CREATE_GAS } else { MIN_TRANSACTION_GAS };
@@ -305,7 +359,11 @@ where
         while (highest_gas_limit - lowest_gas_limit) > 1 {
             let mut env = env.clone();
             env.tx.gas_limit = mid_gas_limit;
-            let ethres = transact(&mut db, env);
+
+            // let ethres = transact(&mut db, env);
+            /* ------LUMIO-START------- */
+            let ethres = transact(&mut db, env.clone());
+            /* ------LUMIO-END------- */
 
             // Exceptional case: init used too much gas, we need to increase the gas limit and try
             // again
@@ -321,14 +379,33 @@ where
             }
 
             let (res, _) = ethres?;
+
+            /* ------LUMIO-START------- */
+            let mut decrease_highest_gas_limit = false;
+            let mut increase_lowest_gas_limit = false;
+            /* ------LUMIO-END------- */
+
+            // Interpret result of the EVM step before cross calls.
             match res.result {
-                ExecutionResult::Success { .. } => {
+                ExecutionResult::Success { gas_used, .. } => {
                     // cap the highest gas limit with succeeding gas limit
-                    highest_gas_limit = mid_gas_limit;
+
+                    // highest_gas_limit = mid_gas_limit;
+                    /* ------LUMIO-START------- */
+                    if gas_used + gas_used_by_cross_calls > mid_gas_limit {
+                        increase_lowest_gas_limit = true;
+                    } else {
+                        decrease_highest_gas_limit = true;
+                    }
+                    /* ------LUMIO-END------- */
                 }
                 ExecutionResult::Revert { .. } => {
                     // increase the lowest gas limit
-                    lowest_gas_limit = mid_gas_limit;
+
+                    // lowest_gas_limit = mid_gas_limit;
+                    /* ------LUMIO-START------- */
+                    increase_lowest_gas_limit = true;
+                    /* ------LUMIO-END------- */
                 }
                 ExecutionResult::Halt { reason, .. } => {
                     match reason {
@@ -338,7 +415,11 @@ where
                             // call succeeds with a higher gaslimit. common usage of invalid opcode in openzeppelin <https://github.com/OpenZeppelin/openzeppelin-contracts/blob/94697be8a3f0dfcd95dfb13ffbd39b5973f5c65d/contracts/metatx/ERC2771Forwarder.sol#L360-L367>
 
                             // increase the lowest gas limit
-                            lowest_gas_limit = mid_gas_limit;
+
+                            // lowest_gas_limit = mid_gas_limit;
+                            /* ------LUMIO-START------- */
+                            increase_lowest_gas_limit = true;
+                            /* ------LUMIO-END------- */
                         }
                         err => {
                             // these should be unreachable because we know the transaction succeeds,
@@ -348,6 +429,16 @@ where
                     }
                 }
             }
+
+            /* ------LUMIO-START------- */
+            if decrease_highest_gas_limit {
+                highest_gas_limit = mid_gas_limit;
+            }
+            if increase_lowest_gas_limit {
+                lowest_gas_limit = mid_gas_limit;
+            }
+            /* ------LUMIO-END------- */
+
             // new midpoint
             mid_gas_limit = ((highest_gas_limit as u128 + lowest_gas_limit as u128) / 2) as u64;
         }
@@ -464,3 +555,50 @@ where
         ExecutionResult::Halt { reason, .. } => RpcInvalidTransactionError::EvmHalt(reason).into(),
     }
 }
+
+/* ------LUMIO-START------- */
+fn transact_cross_calls<DB>(
+    env: EnvWithHandlerCfg,
+    db: &mut DB,
+    total_gas_limit: u64,
+    cross_calls_gas_limit: u64,
+    evm_tx_result: &ExecutionResult,
+    caller: Address,
+) -> EthResult<u64>
+where
+    DB: Database + DatabaseCommit,
+    DB::Error: Display,
+{
+    let mut evm = revm::Evm::builder().with_env(Box::new((*env).clone())).with_db(db).build();
+
+    let mut mvm = MoveExecutor::default();
+
+    let mvm_res = cross_vm::run_cross_calls(
+        evm_tx_result,
+        &mut evm,
+        &mut mvm,
+        cross_calls_gas_limit,
+        map_account_address_to_move(caller),
+    );
+
+    match mvm_res {
+        Ok(unused_after_cross_calls) => Ok(cross_calls_gas_limit - unused_after_cross_calls),
+        Err(err) => Err(to_eth_api_error(err, total_gas_limit)),
+    }
+}
+
+fn to_eth_api_error(err: BlockExecutionError, total_gas_limit: u64) -> EthApiError {
+    // Return explicit OutOfGas error if the error is gas related.
+    if let BlockExecutionError::CanonicalCommit { inner } = &err {
+        if inner.contains("OUT_OF_GAS") {
+            let rpc_err =
+                RpcInvalidTransactionError::out_of_gas(OutOfGasError::Basic, total_gas_limit);
+            return rpc_err.into();
+        }
+    }
+    // Otherwise, interpret the error as a revert.
+    let revert_error = RevertError::new(Bytes::from(err.to_string()));
+    let revert = RpcInvalidTransactionError::Revert(revert_error);
+    revert.into()
+}
+/* ------LUMIO-END------- */

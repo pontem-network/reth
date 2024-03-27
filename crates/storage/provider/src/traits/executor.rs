@@ -5,6 +5,9 @@ use reth_interfaces::executor::BlockExecutionError;
 use reth_primitives::{BlockNumber, BlockWithSenders, PruneModes, Receipt, U256};
 use std::time::Duration;
 use tracing::debug;
+//------LUMIO-START-------
+use reth_primitives::lumio::LumioBlockInfo;
+//------LUMIO-END---------
 
 /// Executor factory that would create the EVM with particular state provider.
 ///
@@ -54,7 +57,14 @@ pub trait BlockExecutor {
         &mut self,
         block: &BlockWithSenders,
         total_difficulty: U256,
-    ) -> Result<(Vec<Receipt>, u64), Self::Error>;
+    ) -> Result<
+        (
+            Vec<Receipt>,
+            u64,
+            /* ------LUMIO-START------- */ LumioBlockInfo, /* ------LUMIO-END------- */
+        ),
+        Self::Error,
+    >;
 
     /// Return bundle state. This is output of executed blocks.
     fn take_output_state(&mut self) -> BundleStateWithReceipts;

@@ -213,6 +213,7 @@ impl PendingBlockEnv {
             db.take_bundle(),
             Receipts::from_vec(vec![receipts]),
             block_number,
+            /* ------LUMIO-START------- */ vec![], /* ------LUMIO-END------- */
         );
 
         let receipts_root = bundle

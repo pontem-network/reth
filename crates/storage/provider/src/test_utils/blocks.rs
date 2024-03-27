@@ -158,6 +158,7 @@ fn block1(number: BlockNumber) -> (SealedBlockWithSenders, BundleStateWithReceip
             deposit_receipt_version: None,
         })]]),
         number,
+        /* ------LUMIO-START------- */ vec![], /* ------LUMIO-END------- */
     );
 
     let state_root = bundle_state_root(&bundle);
@@ -216,6 +217,7 @@ fn block2(
             deposit_receipt_version: None,
         })]]),
         number,
+        /* ------LUMIO-START------- */ vec![], /* ------LUMIO-END------- */
     );
 
     let mut extended = prev_state.clone();
@@ -281,6 +283,7 @@ fn block3(
             deposit_receipt_version: None,
         })]]),
         number,
+        /* ------LUMIO-START------- */ vec![], /* ------LUMIO-END------- */
     );
 
     let mut extended = prev_state.clone();
@@ -370,6 +373,7 @@ fn block4(
             deposit_receipt_version: None,
         })]]),
         number,
+        /* ------LUMIO-START------- */ vec![], /* ------LUMIO-END------- */
     );
 
     let mut extended = prev_state.clone();
@@ -454,6 +458,7 @@ fn block5(
             deposit_receipt_version: None,
         })]]),
         number,
+        /* ------LUMIO-START------- */ vec![], /* ------LUMIO-END------- */
     );
 
     let mut extended = prev_state.clone();

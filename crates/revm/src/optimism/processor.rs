@@ -10,7 +10,20 @@ use reth_primitives::{
 use reth_provider::{BlockExecutor, BundleStateWithReceipts};
 use revm::DatabaseCommit;
 use std::time::Instant;
-use tracing::{debug, trace};
+use tracing::{debug, error, trace};
+
+/* ------LUMIO-START------- */
+use crate::{
+    lumio::{
+        cross_vm,
+        mapper::map_account_address_to_move,
+        tx_info::BlockInfo,
+        tx_type::{LumioExtension, MagicTx},
+    },
+    primitives::ExecutionResult,
+};
+use reth_primitives::{lumio::LumioBlockInfo, revm::env::fill_tx_env};
+/* ------LUMIO-END------- */
 
 /// Verify the calculated receipts root against the expected receipts root.
 pub fn verify_receipt_optimism<'a>(
@@ -50,7 +63,10 @@ where
         total_difficulty: U256,
     ) -> Result<(), BlockExecutionError> {
         let receipts = self.execute_inner(block, total_difficulty)?;
-        self.save_receipts(receipts)
+        //self.save_receipts(receipts)
+        /* ------LUMIO-START------- */
+        self.save_receipts(receipts.0, receipts.1)
+        /* ------LUMIO-END------- */
     }
 
     fn execute_and_verify_receipt(
@@ -59,7 +75,10 @@ where
         total_difficulty: U256,
     ) -> Result<(), BlockExecutionError> {
         // execute block
-        let receipts = self.execute_inner(block, total_difficulty)?;
+        //let receipts = self.execute_inner(block, total_difficulty)?;
+        /* ------LUMIO-START------- */
+        let (receipts, block_info) = self.execute_inner(block, total_difficulty)?;
+        /* ------LUMIO-END------- */
 
         // TODO Before Byzantium, receipts contained state root that would mean that expensive
         // operation as hashing that is needed for state root got calculated in every
@@ -80,20 +99,58 @@ where
             self.stats.receipt_root_duration += time.elapsed();
         }
 
-        self.save_receipts(receipts)
+        self.save_receipts(
+            receipts,   /* ------LUMIO-START------- */
+            block_info, /* ------LUMIO-END------- */
+        )
     }
 
     fn execute_transactions(
         &mut self,
         block: &BlockWithSenders,
         total_difficulty: U256,
-    ) -> Result<(Vec<Receipt>, u64), BlockExecutionError> {
+    ) -> Result<
+        (
+            Vec<Receipt>,
+            u64,
+            /* ------LUMIO-START------- */ LumioBlockInfo, /* ------LUMIO-END------- */
+        ),
+        BlockExecutionError,
+    > {
         self.init_env(&block.header, total_difficulty);
+        /* ------LUMIO-START------- */
+        let number = block.header.number;
+        let timestamp = block.header.timestamp;
+        let mut block_info = BlockInfo::new(timestamp, self.mv.epoch(), number, self.mv.chain_id());
+        /* ------LUMIO-END------- */
 
         // perf: do not execute empty blocks
         if block.body.is_empty() {
-            return Ok((Vec::new(), 0))
+            return Ok((
+                Vec::new(),
+                0,
+                /* ------LUMIO-START------- */
+                LumioBlockInfo { number, block_info: block_info.encode()? }, /* ------LUMIO-END------- */
+            ));
         }
+
+        /* ------LUMIO-START------- */
+        let mut log = if self.mv.check_framework(&mut self.evm.context.evm.db)? {
+            let (ResultAndState { result, state }, tx_info) =
+                self.mv.new_block(number, timestamp, &mut self.evm.context.evm.db)?;
+            if !result.is_success() {
+                return Err(BlockExecutionError::CanonicalCommit {
+                    inner: format!("Failed to create block:{:?}", result),
+                });
+            }
+            block_info.add_transaction(tx_info);
+            self.db_mut().original_db.commit(state);
+            result.into_logs()
+        } else {
+            error!(target: "evm", "Move framework is not initialized.");
+            Vec::new()
+        };
+        /* ------LUMIO-END------- */
 
         let is_regolith =
             self.chain_spec.fork(Hardfork::Regolith).active_at_timestamp(block.timestamp);
@@ -102,7 +159,7 @@ where
         // blocks will always have at least a single transaction in them (the L1 info transaction),
         // so we can safely assume that this will always be triggered upon the transition and that
         // the above check for empty blocks will never be hit on OP chains.
-        super::ensure_create2_deployer(self.chain_spec().clone(), block.timestamp, self.db_mut())
+        super::ensure_create2_deployer(self.chain_spec().clone(), block.timestamp,/*------LUMIO-START-------*/&mut /*------LUMIO-END-------*/self.db_mut()/*------LUMIO-START-------*/.original_db/*------LUMIO-END-------*/)
             .map_err(|_| {
             BlockExecutionError::OptimismBlockExecution(
                 OptimismBlockExecutionError::ForceCreate2DeployerFail,
@@ -133,6 +190,31 @@ where
                 ))
             }
 
+            let mut deposit_tx = None;
+            // Create new move account on L1 => L2 deposit tx.
+            if transaction.is_deposit() {
+                let recipient = transaction.to().unwrap();
+                let gas_limit = transaction.gas_limit();
+                let result = self.mv.create_move_account(
+                    recipient,
+                    gas_limit,
+                    &mut self.evm.context.evm.db,
+                )?;
+
+                match result {
+                    Some(res_and_state) => {
+                        let (ResultAndState { result: _, state }, tx_info) = res_and_state;
+                        deposit_tx = Some(tx_info);
+                        // TODO: add test case where cross tx failed and check that deposit tx
+                        // worked!
+                        self.db_mut().original_db.commit(state);
+                    }
+                    None => {
+                        // Do not commit state if account already exists.
+                    }
+                }
+            };
+
             // Cache the depositor account prior to the state transition for the deposit nonce.
             //
             // Note that this *only* needs to be done post-regolith hardfork, as deposit nonces
@@ -141,6 +223,9 @@ where
             let depositor = (is_regolith && transaction.is_deposit())
                 .then(|| {
                     self.db_mut()
+                        /* ------LUMIO-START------- */
+                        .original_db
+                        /* ------LUMIO-END------- */
                         .load_cache_account(*sender)
                         .map(|acc| acc.account_info().unwrap_or_default())
                 })
@@ -148,7 +233,76 @@ where
                 .map_err(|_| BlockExecutionError::ProviderError)?;
 
             // Execute transaction.
-            let ResultAndState { result, state } = self.transact(transaction, *sender)?;
+            //let ResultAndState { result, state } = self.transact(transaction, *sender)?;
+            /* ------LUMIO-START------- */
+            let ResultAndState { mut result, mut state } = match MagicTx::from(transaction) {
+                MagicTx::Eth(transaction) => self.transact(transaction, *sender)?,
+                MagicTx::Move(LumioExtension::Signed(transaction), eth_tx) => {
+                    let (tx_result, mut tx_info) =
+                        self.mv.transact(transaction, *sender, &mut self.evm.context.evm.db)?;
+
+                    if let Some(deposit_info) = deposit_tx {
+                        tx_info.merge(deposit_info);
+                    }
+
+                    block_info.add_transaction(tx_info);
+
+                    // Fill the evm env properly
+                    let mut envelope_buf = Vec::with_capacity(eth_tx.length_without_header());
+                    eth_tx.encode_enveloped(&mut envelope_buf);
+                    fill_tx_env(&mut self.evm.context.evm.env.tx, eth_tx, *sender);
+
+                    tx_result
+                }
+                MagicTx::Move(LumioExtension::Genesis(genesis), _) => {
+                    let (tx_result, mut tx_info) =
+                        self.mv.execute_genesis(genesis, &mut self.evm.context.evm.db)?;
+                    if let Some(deposit_info) = deposit_tx {
+                        tx_info.merge(deposit_info);
+                    }
+                    block_info.add_transaction(tx_info);
+
+                    tx_result
+                }
+            };
+
+            self.stats.execution_duration += time.elapsed();
+            let time = Instant::now();
+
+            self.db_mut().commit(state.clone());
+
+            let signer = transaction
+                .signature()
+                .recover_signer(transaction.transaction.signature_hash())
+                .unwrap_or_default();
+            let mut gas_used = result.gas_used();
+
+            // cross vm call handle
+            let cross_result = dbg!(cross_vm::run_cross_calls(
+                &result,
+                &mut self.evm,
+                &mut self.mv,
+                transaction.gas_limit() - gas_used,
+                map_account_address_to_move(signer),
+            ));
+
+            match cross_result {
+                Ok(available_gas) => {
+                    gas_used = transaction.gas_limit() - available_gas;
+                    self.db_mut().finalize();
+                }
+                Err(err) => {
+                    // redefine origin tx execution result
+                    result = ExecutionResult::Revert {
+                        gas_used,
+                        output: err.to_string().into_bytes().into(),
+                    };
+                    state = Default::default();
+
+                    self.db_mut().rollback();
+                }
+            }
+            /* ------LUMIO-END------- */
             trace!(
                 target: "evm",
                 ?transaction, ?result, ?state,
@@ -157,12 +311,16 @@ where
             self.stats.execution_duration += time.elapsed();
             let time = Instant::now();
 
-            self.db_mut().commit(state);
+            // self.db_mut().commit(state);
+            /* ------LUMIO-START-------*//*------LUMIO-END------- */
 
             self.stats.apply_state_duration += time.elapsed();
 
             // append gas used
-            cumulative_gas_used += result.gas_used();
+            //cumulative_gas_used += result.gas_used();
+            /* ------LUMIO-START------- */
+            cumulative_gas_used += gas_used;
+            /* ------LUMIO-END------- */
 
             // Push transaction changeset and calculate header bloom filter for receipt.
             receipts.push(Receipt {
@@ -172,7 +330,13 @@ where
                 success: result.is_success(),
                 cumulative_gas_used,
                 // convert to reth log
-                logs: result.into_logs().into_iter().map(Into::into).collect(),
+                logs: result
+                    .into_logs()
+                    .into_iter()
+                    /* ------LUMIO-START------- */
+                    .chain(std::mem::take(&mut log)) /* ------LUMIO-END------- */
+                    .map(Into::into)
+                    .collect(),
                 #[cfg(feature = "optimism")]
                 deposit_nonce: depositor.map(|account| account.nonce),
                 // The deposit receipt version was introduced in Canyon to indicate an update to how
@@ -184,21 +348,43 @@ where
                     .is_fork_active_at_timestamp(Hardfork::Canyon, block.timestamp)
                     .then_some(1),
             });
+            /* ------LUMIO-START------- */
+            self.mv.finalize(); /* ------LUMIO-END------- */
         }
 
-        Ok((receipts, cumulative_gas_used))
+        // Ok((receipts, cumulative_gas_used))
+        /* ------LUMIO-START------- */
+        let block_info = block_info.encode()?;
+        Ok((receipts, cumulative_gas_used, LumioBlockInfo { number, block_info }))
+        /* ------LUMIO-END------- */
     }
 
     fn take_output_state(&mut self) -> BundleStateWithReceipts {
         let receipts = std::mem::take(&mut self.receipts);
+        /* ------LUMIO-START------- */
+        let blocks = std::mem::take(&mut self.blocks);
+        /* ------LUMIO-END------- */
         BundleStateWithReceipts::new(
-            self.evm.context.evm.db.take_bundle(),
+            self.evm
+                .context
+                .evm
+                .db /* ------LUMIO-START------- */
+                .original_db /* ------LUMIO-END------- */
+                .take_bundle(),
             receipts,
             self.first_block.unwrap_or_default(),
+            /* ------LUMIO-START------- */ blocks, /* ------LUMIO-END------- */
         )
     }
 
     fn size_hint(&self) -> Option<usize> {
-        Some(self.evm.context.evm.db.bundle_size_hint())
+        Some(
+            self.evm
+                .context
+                .evm
+                .db /* ------LUMIO-START------- */
+                .original_db /* ------LUMIO-END------- */
+                .bundle_size_hint(),
+        )
     }
 }

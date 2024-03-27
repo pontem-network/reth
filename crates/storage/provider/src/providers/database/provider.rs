@@ -547,6 +547,7 @@ impl<TX: DbTxMut + DbTx> DatabaseProvider<TX> {
             Vec::new(),
             reth_primitives::Receipts::from_vec(receipts),
             start_block_number,
+            /* ------LUMIO-START------- */ vec![], /* ------LUMIO-END------- */
         ))
     }
 
@@ -1493,6 +1494,16 @@ impl<TX: DbTx> TransactionsProviderExt for DatabaseProvider<TX> {
         )
     }
 }
+
+/* ------LUMIO-START------- */
+use crate::traits::LumioProvider;
+impl<TX: DbTx> LumioProvider for DatabaseProvider<TX> {
+    #[doc = " Get the block info for the given block number."]
+    fn get_block_info(&self, number: u64) -> RethResult<Option<Vec<u8>>> {
+        Ok(self.tx.get::<tables::LumioBlockInfos>(number)?)
+    }
+}
+/* ------LUMIO-END------- */
 
 /// Calculates the hash of the given transaction
 

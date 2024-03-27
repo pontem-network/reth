@@ -6,6 +6,11 @@ use parking_lot::Mutex;
 use reth_interfaces::executor::BlockExecutionError;
 use reth_primitives::{BlockNumber, BlockWithSenders, PruneModes, Receipt, U256};
 use std::sync::Arc;
+
+/* ------LUMIO-START------- */
+use reth_primitives::lumio::LumioBlockInfo;
+/* ------LUMIO-END------- */
+
 /// Test executor with mocked result.
 #[derive(Debug)]
 pub struct TestExecutor(pub Option<BundleStateWithReceipts>);
@@ -39,7 +44,14 @@ impl BlockExecutor for TestExecutor {
         &mut self,
         _block: &BlockWithSenders,
         _total_difficulty: U256,
-    ) -> Result<(Vec<Receipt>, u64), BlockExecutionError> {
+    ) -> Result<
+        (
+            Vec<Receipt>,
+            u64,
+            /* ------LUMIO-START------- */ LumioBlockInfo, /* ------LUMIO-END------- */
+        ),
+        BlockExecutionError,
+    > {
         Err(BlockExecutionError::UnavailableForTest)
     }
 

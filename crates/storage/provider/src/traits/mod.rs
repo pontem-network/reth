@@ -36,7 +36,7 @@ pub use receipts::{ReceiptProvider, ReceiptProviderIdExt};
 mod state;
 pub use state::{
     BlockchainTreePendingStateProvider, BundleStateDataProvider, StateProvider, StateProviderBox,
-    StateProviderFactory, StateRootProvider,
+    StateProviderFactory, StateRootProvider, TrieUpdates,
 };
 
 mod transactions;
@@ -71,3 +71,8 @@ pub use prune_checkpoint::{PruneCheckpointReader, PruneCheckpointWriter};
 
 mod database_provider;
 pub use database_provider::DatabaseProviderFactory;
+
+//------LUMIO-START-------
+mod lumio;
+pub use lumio::*;
+//------LUMIO-END---------

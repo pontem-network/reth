@@ -47,10 +47,12 @@ pub const ETHEREUM_BLOCK_GAS_LIMIT: u64 = 30_000_000;
 ///
 /// Note that min base fee under different 1559 parameterizations may differ, but there's no
 /// signifant harm in leaving this setting as is.
-pub const MIN_PROTOCOL_BASE_FEE: u64 = 7;
+/* ------LUMIO-START------- */
+pub const MIN_PROTOCOL_BASE_FEE: u64 = 0;
 
 /// Same as [MIN_PROTOCOL_BASE_FEE] but as a U256.
-pub const MIN_PROTOCOL_BASE_FEE_U256: U256 = U256::from_limbs([7u64, 0, 0, 0]);
+pub const MIN_PROTOCOL_BASE_FEE_U256: U256 = U256::from_limbs([0u64, 0, 0, 0]);
+/* ------LUMIO-END------- */
 
 /// Initial base fee as defined in [EIP-1559](https://eips.ethereum.org/EIPS/eip-1559)
 pub const EIP1559_INITIAL_BASE_FEE: u64 = 1_000_000_000;

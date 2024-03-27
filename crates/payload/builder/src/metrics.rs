@@ -1,4 +1,8 @@
 //! Payload builder service metrics.
+/* ------LUMIO-START------- */
+#![allow(dead_code)]
+#![allow(unused_imports)]
+/* ------LUMIO-END------- */
 
 use reth_metrics::{
     metrics::{Counter, Gauge},

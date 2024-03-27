@@ -27,6 +27,10 @@ pub mod genesis;
 mod header;
 mod integer_list;
 mod log;
+/* ------LUMIO-START------- */
+/// Lumio specific re-exports
+pub mod lumio;
+/* ------LUMIO-END------- */
 mod net;
 mod peer;
 pub mod proofs;

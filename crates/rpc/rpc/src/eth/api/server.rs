@@ -31,6 +31,10 @@ use reth_transaction_pool::TransactionPool;
 use serde_json::Value;
 use tracing::trace;
 
+/* ------LUMIO-START------- */
+use reth_provider::LumioProvider;
+/* ------LUMIO-END------- */
+
 #[async_trait::async_trait]
 impl<Provider, Pool, Network, EvmConfig> EthApiServer for EthApi<Provider, Pool, Network, EvmConfig>
 where
@@ -38,6 +42,9 @@ where
     Pool: TransactionPool + 'static,
     Provider: BlockReader
         + BlockIdReader
+        /* ------LUMIO-START------- */
+        + LumioProvider
+        /* ------LUMIO-END------- */
         + BlockReaderIdExt
         + ChainSpecProvider
         + HeaderProvider
@@ -402,6 +409,20 @@ where
             _ => e.into(),
         })?)
     }
+
+    /* ------LUMIO-START------- */
+    /// Handler for: `eth_getLumioBlockInfo`
+    async fn get_lumio_block_info(&self, block_number: u64) -> Result<Option<Bytes>> {
+        trace!(target: "rpc::eth", ?block_number, "Serving eth_getLumioBlockInfo");
+        Ok(EthApi::get_lumio_block_info(self, block_number).await?)
+    }
+
+    /// Handler for: `eth_getLumioBlockInfos`
+    async fn get_lumio_block_infos(&self, block_number: u64, limit: u64) -> Result<Vec<Bytes>> {
+        trace!(target: "rpc::eth", ?block_number, "Serving eth_getLumioBlockInfos");
+        Ok(EthApi::get_lumio_block_infos(self, block_number, limit).await?)
+    }
+    /* ------LUMIO-END------- */
 }
 
 #[cfg(test)]

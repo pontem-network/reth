@@ -759,3 +759,21 @@ mod tests {
         assert!(call_fees.is_err());
     }
 }
+
+/* ------LUMIO-START------- */
+use reth_revm::lumio::{
+    executor::{simulate_tx, view_call, view_resource},
+    tx_type::MagicView,
+};
+pub(crate) fn transact_magic<DB>(db: DB, magic_view: MagicView) -> ResultAndState
+where
+    DB: Database,
+    DB::Error: std::fmt::Display,
+{
+    match magic_view {
+        MagicView::Resource(resource) => view_resource(db, resource.key),
+        MagicView::ViewCall(view) => view_call(db, view),
+        MagicView::Simulated(sim) => simulate_tx(db, &sim),
+    }
+}
+/* ------LUMIO-END------- */

@@ -44,6 +44,9 @@ use std::{
     path::PathBuf,
 };
 use tracing::{debug, info};
+/* ------LUMIO-START------- */
+use reth_provider::LumioProvider;
+/* ------LUMIO-END------- */
 
 /// Default max number of subscriptions per connection.
 pub(crate) const RPC_DEFAULT_MAX_SUBS_PER_CONN: u32 = 1024;
@@ -355,6 +358,9 @@ impl RpcServerArgs {
     ) -> Result<RpcServerHandle, RpcError>
     where
         Provider: BlockReaderIdExt
+            /* ------LUMIO-START------- */
+            + LumioProvider
+            /* ------LUMIO-END------- */
             + AccountReader
             + HeaderProvider
             + StateProviderFactory
@@ -397,6 +403,9 @@ impl RpcServerArgs {
     ) -> Result<AuthServerHandle, RpcError>
     where
         Provider: BlockReaderIdExt
+            /* ------LUMIO-START------- */
+            + LumioProvider
+            /* ------LUMIO-END------- */
             + ChainSpecProvider
             + EvmEnvProvider
             + HeaderProvider

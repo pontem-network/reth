@@ -141,6 +141,10 @@ impl Command {
                 Tables::PruneCheckpoints => {
                     find_diffs::<PruneCheckpoints>(primary_tx, secondary_tx, output_dir)?
                 }
+                /* ------LUMIO-START------- */
+                Tables::LumioBlockInfos => {
+                    find_diffs::<reth_db::LumioBlockInfos>(primary_tx, secondary_tx, output_dir)?
+                } /* ------LUMIO-END------- */
             };
         }
 

@@ -120,6 +120,12 @@ pub enum BlockExecutionError {
     #[cfg(feature = "optimism")]
     #[error(transparent)]
     OptimismBlockExecution(#[from] OptimismBlockExecutionError),
+    /* ------LUMIO-START------- */
+    /// Magic Block Executor Errors
+    #[cfg(feature = "optimism")]
+    #[error(transparent)]
+    MagicBlockExecution(#[from] MagicBlockExecutionError),
+    /* ------LUMIO-END------- */
 }
 
 /// Optimism Block Executor Errors
@@ -139,6 +145,17 @@ pub enum OptimismBlockExecutionError {
     #[error("blob transaction included in sequencer block")]
     BlobTransactionRejected,
 }
+
+/* ------LUMIO-START------- */
+/// Magic Block Executor Errors
+#[cfg(feature = "optimism")]
+#[derive(Error, Debug, Clone, PartialEq, Eq)]
+pub enum MagicBlockExecutionError {
+    /// Thrown when one of the cross vm calls fails.
+    #[error("failed to execute cross vm call")]
+    CrossVMCallFail,
+}
+/* ------LUMIO-END------- */
 
 impl BlockExecutionError {
     /// Returns `true` if the error is fatal.

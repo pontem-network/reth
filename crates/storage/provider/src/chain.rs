@@ -521,6 +521,7 @@ mod tests {
             ),
             Receipts::from_vec(vec![vec![]]),
             1,
+            /* ------LUMIO-START------- */ vec![], /* ------LUMIO-END------- */
         );
 
         let block_state2 = BundleStateWithReceipts::new(
@@ -536,6 +537,7 @@ mod tests {
             ),
             Receipts::from_vec(vec![vec![]]),
             2,
+            /* ------LUMIO-START------- */ vec![], /* ------LUMIO-END------- */
         );
 
         let mut block1 = SealedBlockWithSenders::default();

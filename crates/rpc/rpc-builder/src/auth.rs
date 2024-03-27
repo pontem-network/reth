@@ -32,6 +32,9 @@ use std::{
     net::{IpAddr, Ipv4Addr, SocketAddr},
     time::{Duration, SystemTime, UNIX_EPOCH},
 };
+/* ------LUMIO-START------- */
+use reth_provider::LumioProvider;
+/* ------LUMIO-END------- */
 
 /// Configure and launch a _standalone_ auth server with `engine` and a _new_ `eth` namespace.
 #[allow(clippy::too_many_arguments)]
@@ -47,6 +50,9 @@ pub async fn launch<Provider, Pool, Network, Tasks, EngineApi, EngineT, EvmConfi
 ) -> Result<AuthServerHandle, RpcError>
 where
     Provider: BlockReaderIdExt
+        /* ------LUMIO-START------- */
+        + LumioProvider
+        /* ------LUMIO-END------- */
         + ChainSpecProvider
         + EvmEnvProvider
         + HeaderProvider
@@ -104,6 +110,9 @@ pub async fn launch_with_eth_api<Provider, Pool, Network, EngineApi, EngineT, Ev
 ) -> Result<AuthServerHandle, RpcError>
 where
     Provider: BlockReaderIdExt
+        /* ------LUMIO-START------- */
+        + LumioProvider
+        /* ------LUMIO-END------- */
         + ChainSpecProvider
         + EvmEnvProvider
         + HeaderProvider

@@ -26,6 +26,11 @@ use std::{
     sync::Arc,
 };
 
+/* ------LUMIO-START------- */
+use crate::LumioProvider;
+use reth_interfaces::RethResult;
+/* ------LUMIO-END------- */
+
 /// Supports various api interfaces for testing purposes.
 #[derive(Debug, Clone, Default, Copy)]
 #[non_exhaustive]
@@ -36,6 +41,14 @@ impl ChainSpecProvider for NoopProvider {
         MAINNET.clone()
     }
 }
+
+/* ------LUMIO-START------- */
+impl LumioProvider for NoopProvider {
+    fn get_block_info(&self, _number: u64) -> RethResult<Option<Vec<u8>>> {
+        Ok(None)
+    }
+}
+/* ------LUMIO-END------- */
 
 /// Noop implementation for testing purposes
 impl BlockHashReader for NoopProvider {
