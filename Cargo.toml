@@ -89,9 +89,9 @@ rust.unused_must_use = "deny"
 rust.rust_2018_idioms = "deny"
 
 [workspace.package]
-version = "0.2.0-beta.2"
+version = "0.2.0-beta.3"
 edition = "2021"
-rust-version = "1.75"
+rust-version = "1.76"
 license = "MIT OR Apache-2.0"
 homepage = "https://paradigmxyz.github.io/reth"
 repository = "https://github.com/paradigmxyz/reth"
@@ -135,21 +135,21 @@ ethabi = { version = "18.0.0", default-features = false, features = ["serde"] }
 hex = "0.4"
 lazy_static = "1.4.0"
 
-bcs = { git = "ssh://git@github.com/pontem-network/lumio.git", rev = "182c134c5a4e8aeda23c9657f251e3a7081968e9", features = ["std"] }
-move-core-types = { git = "ssh://git@github.com/pontem-network/lumio.git", rev = "182c134c5a4e8aeda23c9657f251e3a7081968e9", features = [
+bcs = { git = "ssh://git@github.com/pontem-network/lumio.git", rev = "1db22a5f", features = ["std"] }
+move-core-types = { git = "ssh://git@github.com/pontem-network/lumio.git", rev = "1db22a5f", features = [
   "std",
 ] }
-move-executor = { git = "ssh://git@github.com/pontem-network/lumio.git", rev = "182c134c5a4e8aeda23c9657f251e3a7081968e9", features = ["std"] }
+move-executor = { git = "ssh://git@github.com/pontem-network/lumio.git", rev = "1db22a5f", features = ["std"] }
 
-aptos-gas-meter = { git = "ssh://git@github.com/pontem-network/lumio.git", rev = "182c134c5a4e8aeda23c9657f251e3a7081968e9" }
-aptos-gas-schedule = { git = "ssh://git@github.com/pontem-network/lumio.git", rev = "182c134c5a4e8aeda23c9657f251e3a7081968e9" }
-aptos-memory-usage-tracker = { git = "ssh://git@github.com/pontem-network/lumio.git", rev = "182c134c5a4e8aeda23c9657f251e3a7081968e9" }
-aptos-types = { git = "ssh://git@github.com/pontem-network/lumio.git", rev = "182c134c5a4e8aeda23c9657f251e3a7081968e9" }
-aptos-vm = { git = "ssh://git@github.com/pontem-network/lumio.git", rev = "182c134c5a4e8aeda23c9657f251e3a7081968e9" }
-aptos-vm-types = { git = "ssh://git@github.com/pontem-network/lumio.git", rev = "182c134c5a4e8aeda23c9657f251e3a7081968e9" }
-move-binary-format = { git = "ssh://git@github.com/pontem-network/lumio.git", rev = "182c134c5a4e8aeda23c9657f251e3a7081968e9" }
-move-vm-runtime = { git = "ssh://git@github.com/pontem-network/lumio.git", rev = "182c134c5a4e8aeda23c9657f251e3a7081968e9" }
-move-vm-types = { git = "ssh://git@github.com/pontem-network/lumio.git", rev = "182c134c5a4e8aeda23c9657f251e3a7081968e9" }
+aptos-gas-meter = { git = "ssh://git@github.com/pontem-network/lumio.git", rev = "1db22a5f" }
+aptos-gas-schedule = { git = "ssh://git@github.com/pontem-network/lumio.git", rev = "1db22a5f" }
+aptos-memory-usage-tracker = { git = "ssh://git@github.com/pontem-network/lumio.git", rev = "1db22a5f" }
+aptos-types = { git = "ssh://git@github.com/pontem-network/lumio.git", rev = "1db22a5f" }
+aptos-vm = { git = "ssh://git@github.com/pontem-network/lumio.git", rev = "1db22a5f" }
+aptos-vm-types = { git = "ssh://git@github.com/pontem-network/lumio.git", rev = "1db22a5f" }
+move-binary-format = { git = "ssh://git@github.com/pontem-network/lumio.git", rev = "1db22a5f" }
+move-vm-runtime = { git = "ssh://git@github.com/pontem-network/lumio.git", rev = "1db22a5f" }
+move-vm-types = { git = "ssh://git@github.com/pontem-network/lumio.git", rev = "1db22a5f" }
 ##------LUMIO-END-------
 
 # reth
@@ -213,7 +213,7 @@ reth-trie-parallel = { path = "crates/trie-parallel" }
 # revm
 revm = { version = "7.1.0", features = ["std", "secp256k1"], default-features = false }
 revm-primitives = { version = "3.0.0", features = ["std"], default-features = false }
-revm-inspectors = { git = "https://github.com/paradigmxyz/evm-inspectors", rev = "1f935e7" }
+revm-inspectors = { git = "https://github.com/paradigmxyz/evm-inspectors", rev = "f96bc1f" }
 
 # eth
 alloy-chains = { git = "https://github.com/pontem-network/chains", rev = "a2b49d804d4c8e37b544a9fe18783a696e133f6d", feature = ["serde", "rlp", "arbitrary"] }
@@ -222,12 +222,12 @@ alloy-dyn-abi = "0.6"
 alloy-sol-types = "0.6"
 alloy-rlp = "0.3"
 alloy-trie = "0.3"
-alloy-rpc-types = { git = "https://github.com/alloy-rs/alloy", rev = "9ac2c90" }
-alloy-rpc-trace-types = { git = "https://github.com/alloy-rs/alloy", rev = "9ac2c90" }
-alloy-rpc-engine-types = { git = "https://github.com/alloy-rs/alloy", rev = "9ac2c90" }
-alloy-genesis = { git = "https://github.com/alloy-rs/alloy", rev = "9ac2c90" }
-alloy-node-bindings = { git = "https://github.com/alloy-rs/alloy", rev = "9ac2c90" }
-alloy-eips = { git = "https://github.com/alloy-rs/alloy", rev = "9ac2c90" }
+alloy-rpc-types = { git = "https://github.com/alloy-rs/alloy", rev = "410850b" }
+alloy-rpc-trace-types = { git = "https://github.com/alloy-rs/alloy", rev = "410850b" }
+alloy-rpc-engine-types = { git = "https://github.com/alloy-rs/alloy", rev = "410850b" }
+alloy-genesis = { git = "https://github.com/alloy-rs/alloy", rev = "410850b" }
+alloy-node-bindings = { git = "https://github.com/alloy-rs/alloy", rev = "410850b" }
+alloy-eips = { git = "https://github.com/alloy-rs/alloy", rev = "410850b" }
 
 # TODO: Remove
 ethers-core = { version = "2.0.14", default-features = false }
@@ -278,6 +278,9 @@ async-trait = "0.1.68"
 futures = "0.3.26"
 pin-project = "1.0.12"
 futures-util = "0.3.25"
+hyper = "0.14.25"
+tower = "0.4"
+tower-http = "0.4"
 
 # p2p
 discv5 = "0.4"
