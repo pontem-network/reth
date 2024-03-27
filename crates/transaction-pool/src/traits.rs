@@ -98,11 +98,11 @@ pub trait TransactionPool: Send + Sync + Clone {
     /// Adds an _unvalidated_ transaction into the pool.
     ///
     /// Consumer: RPC
-    async fn add_transaction_unchecked(
+    fn add_transaction_unchecked(
         &self,
         origin: TransactionOrigin,
         transaction: Self::Transaction,
-    ) -> PoolResult<TxHash>;
+    ) -> impl Future<Output = PoolResult<TxHash>> + Send;
     /* ------LUMIO-END------- */
 
     /// Adds the given _unvalidated_ transaction into the pool.

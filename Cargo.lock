@@ -20,6 +20,7 @@ dependencies = [
  "eyre",
  "jsonrpsee",
  "reth",
+ "reth-node-ethereum",
  "reth-transaction-pool",
  "tokio",
 ]
@@ -1484,12 +1485,10 @@ name = "beacon-api-sse"
 version = "0.0.0"
 dependencies = [
  "clap 4.4.18",
- "eyre",
  "futures-util",
  "mev-share-sse",
  "reth",
- "serde 1.0.197",
- "serde_json",
+ "reth-node-ethereum",
  "tokio",
  "tracing",
 ]
@@ -2207,9 +2206,8 @@ dependencies = [
 name = "cli-extension-event-hooks"
 version = "0.0.0"
 dependencies = [
- "clap 4.4.18",
- "eyre",
  "reth",
+ "reth-node-ethereum",
 ]
 
 [[package]]
@@ -2744,13 +2742,42 @@ dependencies = [
 ]
 
 [[package]]
+name = "custom-dev-node"
+version = "0.0.0"
+dependencies = [
+ "eyre",
+ "futures-util",
+ "reth",
+ "reth-node-core",
+ "reth-node-ethereum",
+ "reth-primitives",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
+name = "custom-evm"
+version = "0.0.0"
+dependencies = [
+ "alloy-chains",
+ "eyre",
+ "reth",
+ "reth-node-api",
+ "reth-node-core",
+ "reth-node-ethereum",
+ "reth-primitives",
+ "reth-tracing",
+ "tokio",
+]
+
+[[package]]
 name = "custom-inspector"
 version = "0.0.0"
 dependencies = [
  "clap 4.4.18",
- "eyre",
  "futures-util",
  "reth",
+ "reth-node-ethereum",
 ]
 
 [[package]]
@@ -2759,32 +2786,45 @@ version = "0.0.0"
 dependencies = [
  "alloy-chains",
  "eyre",
- "jsonrpsee",
  "reth",
+ "reth-basic-payload-builder",
+ "reth-ethereum-payload-builder",
  "reth-node-api",
  "reth-node-core",
+ "reth-node-ethereum",
  "reth-payload-builder",
  "reth-primitives",
- "reth-rpc-api",
  "reth-rpc-types",
+ "reth-tracing",
  "serde 1.0.197",
  "thiserror",
  "tokio",
 ]
 
 [[package]]
+name = "custom-node-components"
+version = "0.0.0"
+dependencies = [
+ "eyre",
+ "reth",
+ "reth-node-ethereum",
+ "reth-tracing",
+ "reth-transaction-pool",
+]
+
+[[package]]
 name = "custom-payload-builder"
 version = "0.0.0"
 dependencies = [
- "clap 4.4.18",
  "eyre",
  "futures-util",
  "reth",
  "reth-basic-payload-builder",
+ "reth-ethereum-payload-builder",
  "reth-node-api",
+ "reth-node-ethereum",
  "reth-payload-builder",
  "reth-primitives",
- "tokio",
  "tracing",
 ]
 
@@ -7958,6 +7998,7 @@ dependencies = [
  "reth-network-api",
  "reth-nippy-jar",
  "reth-node-api",
+ "reth-node-builder",
  "reth-node-core",
  "reth-node-ethereum",
  "reth-node-optimism",
@@ -7994,11 +8035,7 @@ dependencies = [
 name = "reth-auto-seal-consensus"
 version = "0.1.0-alpha.21"
 dependencies = [
- "clap 4.4.18",
- "eyre",
  "futures-util",
- "jsonrpsee",
- "reth",
  "reth-beacon-consensus",
  "reth-interfaces",
  "reth-node-api",
@@ -8007,8 +8044,6 @@ dependencies = [
  "reth-revm",
  "reth-stages",
  "reth-transaction-pool",
- "serde_json",
- "tempfile",
  "tokio",
  "tokio-stream",
  "tracing",
@@ -8589,6 +8624,7 @@ dependencies = [
 name = "reth-node-builder"
 version = "0.1.0-alpha.21"
 dependencies = [
+ "alloy-rlp",
  "confy",
  "eyre",
  "fdlimit",
@@ -8692,6 +8728,7 @@ dependencies = [
 name = "reth-node-ethereum"
 version = "0.1.0-alpha.21"
 dependencies = [
+ "async-trait",
  "eyre",
  "reth-basic-payload-builder",
  "reth-db",
@@ -8713,6 +8750,7 @@ dependencies = [
 name = "reth-node-optimism"
 version = "0.1.0-alpha.21"
 dependencies = [
+ "clap 4.4.18",
  "eyre",
  "reth-basic-payload-builder",
  "reth-db",
@@ -11141,11 +11179,9 @@ name = "trace-transaction-cli"
 version = "0.0.0"
 dependencies = [
  "clap 4.4.18",
- "eyre",
  "futures-util",
- "jsonrpsee",
  "reth",
- "tokio",
+ "reth-node-ethereum",
 ]
 
 [[package]]

@@ -21,6 +21,9 @@ mod network;
 mod payload;
 mod pool;
 mod traits;
+/* LUMIO START */
+mod lumio;
+/* LUMIO END */
 
 /// All the components of the node.
 ///

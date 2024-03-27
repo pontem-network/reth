@@ -10,6 +10,9 @@ use reth_provider::{
 pub trait FullProvider<DB: Database>:
     DatabaseProviderFactory<DB>
     + BlockReaderIdExt
+    /* ------LUMIO-START------- */
+    + reth_provider::LumioProvider
+    /* ------LUMIO-END------- */
     + AccountReader
     + StateProviderFactory
     + EvmEnvProvider
@@ -25,6 +28,9 @@ pub trait FullProvider<DB: Database>:
 impl<T, DB: Database> FullProvider<DB> for T where
     T: DatabaseProviderFactory<DB>
         + BlockReaderIdExt
+        /* ------LUMIO-START------- */
+        + reth_provider::LumioProvider
+        /* ------LUMIO-END------- */
         + AccountReader
         + StateProviderFactory
         + EvmEnvProvider
