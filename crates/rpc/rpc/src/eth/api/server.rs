@@ -458,7 +458,7 @@ mod tests {
             cache::EthStateCache, gas_oracle::GasPriceOracle, FeeHistoryCache,
             FeeHistoryCacheConfig,
         },
-        BlockingTaskPool, EthApi,
+        EthApi,
     };
     use jsonrpsee::types::error::INVALID_PARAMS_CODE;
     use reth_interfaces::test_utils::{generators, generators::Rng};
@@ -474,6 +474,7 @@ mod tests {
     };
     use reth_rpc_api::EthApiServer;
     use reth_rpc_types::FeeHistory;
+    use reth_tasks::pool::BlockingTaskPool;
     use reth_transaction_pool::test_utils::{testing_pool, TestPool};
 
     fn build_test_eth_api<
