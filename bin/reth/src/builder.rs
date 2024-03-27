@@ -36,6 +36,7 @@ use reth_node_ethereum::{EthEngineTypes, EthEvmConfig};
 #[cfg(feature = "optimism")]
 use reth_node_optimism::{OptimismEngineTypes, OptimismEvmConfig};
 use reth_payload_builder::PayloadBuilderHandle;
+use reth_primitives::format_ether;
 use reth_provider::{providers::BlockchainProvider, ProviderFactory};
 use reth_prune::PrunerBuilder;
 use reth_rpc_engine_api::EngineApi;
@@ -275,6 +276,9 @@ impl<DB: Database + DatabaseMetrics + DatabaseMetadata + 'static> NodeBuilderWit
         // Configure the pipeline
         let (mut pipeline, client) = if self.config.dev.dev {
             info!(target: "reth::cli", "Starting Reth in dev mode");
+            for (idx, (address, alloc)) in self.config.chain.genesis.alloc.iter().enumerate() {
+                info!(target: "reth::cli", "Allocated Genesis Account: {:02}. {} ({} ETH)", idx, address.to_string(), format_ether(alloc.balance));
+            }
             let mining_mode =
                 self.config.mining_mode(transaction_pool.pending_transactions_listener());
 
@@ -371,7 +375,7 @@ impl<DB: Database + DatabaseMetrics + DatabaseMetadata + 'static> NodeBuilderWit
             network.event_listener().map(Into::into),
             beacon_engine_handle.event_listener().map(Into::into),
             pipeline_events.map(Into::into),
-            if self.config.debug.tip.is_none() {
+            if self.config.debug.tip.is_none() && !self.config.dev.dev {
                 Either::Left(
                     ConsensusLayerHealthEvents::new(Box::new(blockchain_db.clone()))
                         .map(Into::into),

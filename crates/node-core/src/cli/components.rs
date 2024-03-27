@@ -66,7 +66,7 @@ pub trait RethNodeComponents: Clone + Send + Sync + 'static {
     /// The transaction pool type
     type Pool: TransactionPool + Clone + Unpin + 'static;
     /// The network type used to communicate with p2p.
-    type Network: NetworkInfo + Peers + NetworkProtocols + NetworkEvents + Clone + 'static;
+    type Network: NetworkInfo + Peers + NetworkProtocols + NetworkEvents + Clone + Unpin + 'static;
     /// The events type used to create subscriptions.
     type Events: CanonStateSubscriptions + Clone + 'static;
     /// The type that is used to spawn tasks.
@@ -180,7 +180,7 @@ where
     Provider: FullProvider<DB> + Clone + 'static,
     Tasks: TaskSpawner + Clone + Unpin + 'static,
     Pool: TransactionPool + Clone + Unpin + 'static,
-    Network: NetworkInfo + Peers + NetworkProtocols + NetworkEvents + Clone + 'static,
+    Network: NetworkInfo + Peers + NetworkProtocols + NetworkEvents + Clone + Unpin + 'static,
     Events: CanonStateSubscriptions + Clone + 'static,
     EvmConfig: ConfigureEvmEnv + 'static,
 {
