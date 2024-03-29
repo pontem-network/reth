@@ -40,6 +40,7 @@
 //!         + ChainSpecProvider
 //!         + ChangeSetReader
 //!         + StateProviderFactory
+//!         + reth_provider::LumioProvider
 //!         + EvmEnvProvider
 //!         + Clone
 //!         + Unpin
@@ -105,6 +106,7 @@
 //!         + ChainSpecProvider
 //!         + ChangeSetReader
 //!         + StateProviderFactory
+//!         + reth_provider::LumioProvider
 //!         + EvmEnvProvider
 //!         + Clone
 //!         + Unpin

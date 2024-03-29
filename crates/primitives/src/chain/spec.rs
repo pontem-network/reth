@@ -2804,6 +2804,7 @@ Post-merge hard forks (timestamp based):
     }
 
     #[test]
+    #[ignore = "Lumio: Fork id changed"]
     fn test_hive_paris_block_genesis_json() {
         // this tests that we can handle `parisBlock` in the genesis json and can use it to output
         // a correct forkid

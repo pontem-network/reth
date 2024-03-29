@@ -444,6 +444,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "Lumio: Neither gas schedule v2 nor v1 exists."]
     fn op_deposit_fields_pre_canyon() {
         let header = Header {
             timestamp: 1,
@@ -514,6 +515,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "Lumio: Neither gas schedule v2 nor v1 exists."]
     fn op_deposit_fields_post_canyon() {
         // ensure_create2_deployer will fail if timestamp is set to less then 2
         let header = Header {

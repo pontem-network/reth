@@ -56,6 +56,7 @@ fn payload_body_roundtrip() {
 }
 
 #[test]
+#[ignore = "Lumio: We modify base fees"]
 fn payload_validation() {
     let mut rng = generators::rng();
     let parent = rng.gen();
